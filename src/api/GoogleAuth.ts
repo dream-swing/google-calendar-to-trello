@@ -1,22 +1,22 @@
-import * as fs from 'fs';
-import * as readline from 'readline';
-import * as googleAuth from 'google-auth-library';
-import * as process from 'process';
+import * as fs from "fs";
+import * as readline from "readline";
+import * as googleAuth from "google-auth-library";
+import * as process from "process";
 
-let SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-let TOKEN_DIR:string = (process.env.HOME || process.env.HOMEPATH ||
-    process.env.USERPROFILE) + '/.credentials/';
-let TOKEN_PATH:string = TOKEN_DIR + 'google-auth.json';
-let CLIENT_SECRETS: string = 'secrets/client_secret.json';
+import * as Constants from "./../shared/Constants";
+
+const SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"];
+const TOKEN_PATH:string = Constants.TOKEN_DIR + "google-auth.json";
+const CLIENT_SECRETS: string = "secrets/client_secret.json";
 
 export let processClientSecrets = (callback) => {
 	fs.readFile(CLIENT_SECRETS, (err, content) => {
 		if (err) {
-			console.log('Error loading client secret file: ' + err);
+			console.error("Error loading Google client secret file. " + err);
 			return;
 		}
 
-		authorize(JSON.parse(content.toString('utf8')), callback);
+		authorize(JSON.parse(content.toString("utf8")), callback);
 	});
 }
 
@@ -38,7 +38,7 @@ let authorize = (credentials, callback) => {
 		if (err) {
 			getNewToken(oauth2Client, callback);
 		} else {
-			oauth2Client.credentials = JSON.parse(token.toString('utf8'));
+			oauth2Client.credentials = JSON.parse(token.toString("utf8"));
 			callback(oauth2Client);
 		}
 	});
@@ -54,19 +54,19 @@ let authorize = (credentials, callback) => {
  */
 let getNewToken = (oauth2Client, callback) => {
 	let authUrl = oauth2Client.generateAuthUrl({
-		access_type: 'offline',
+		access_type: "offline",
 		scope: SCOPES
 	});
-	console.log('Authorize this app by visiting this url: ', authUrl);
+	console.log("Authorize this app by visiting this url: ", authUrl);
 	let rl = readline.createInterface({
 		input: process.stdin,
 		output: process.stdout
 	});
-	rl.question('Enter the code from that page here: ', (code) => {
+	rl.question("Enter the code from that page here: ", (code) => {
 		rl.close();
 		oauth2Client.getToken(code, (err, token) => {
 			if (err) {
-				console.log('Error while trying to retrieve access token', err);
+				console.error("Error while trying to retrieve access token", err);
 				return;
 			}
 			oauth2Client.credentials = token;
@@ -83,14 +83,14 @@ let getNewToken = (oauth2Client, callback) => {
  */
 let storeToken = (token) => {
 	try {
-		fs.mkdirSync(TOKEN_DIR);
+		fs.mkdirSync(Constants.TOKEN_DIR);
 	} catch (err) {
-		if (err.code != 'EEXIST') {
+		if (err.code != "EEXIST") {
 			throw err;
 		}
 	}
 	fs.writeFile(TOKEN_PATH, JSON.stringify(token));
-	console.log('Token stored to ' + TOKEN_PATH);
+	console.log("Token stored to " + TOKEN_PATH);
 }
 
 

@@ -1,5 +1,6 @@
-import * as gCal from './api/GoogleCalendar';
-import * as moment from 'moment';
+import * as gCal from "./api/GoogleCalendar";
+import * as trello from "./api/Trello";
+import * as moment from "moment";
 
 let listEvents = () => {
 	let today = moment();
@@ -48,4 +49,17 @@ let printEvents = (events) => {
 	}
 }
 
-listEvents();
+let printBoards = () => {
+	trello.getBoards((boards) => {
+		if (!boards) {
+			console.error("Error retrieving boards.");
+		} else {
+			console.log("All your boards:");
+			for (let board of boards) {
+				console.log(board.name);
+			}
+		}
+	});
+}
+
+printBoards();
