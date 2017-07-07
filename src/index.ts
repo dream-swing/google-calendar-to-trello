@@ -62,20 +62,18 @@ let printBoards = () => {
 	});
 }
 
-let printLists = () => {
+let AddCardToList = () => {
 	trello.getWeekList((lists) => {
 		if (!lists) {
 			console.error("Error retrieving lists.");
 		} else {
-			console.log("Lists:");
-			for (let list in lists) {
-				console.log(JSON.stringify(lists[list]));
-			}
+			let satList = lists["Saturday"];
+			trello.createCard(satList.id, "Test card created!");
 		}
 	});
 }
 
-printLists(); 
+AddCardToList(); 
 
 
 
