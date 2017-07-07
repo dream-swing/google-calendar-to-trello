@@ -27,6 +27,7 @@ let main = () => {
 
 let createCard = (list, event) => {
 	let cardTitle = getCardNameFromEvent(event);
+	console.log(`Adding ${cardTitle} to list ${list.name}`);
 	trelloAPI.createCard(list.id, cardTitle);
 }
 
