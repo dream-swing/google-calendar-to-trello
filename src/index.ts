@@ -62,4 +62,28 @@ let printBoards = () => {
 	});
 }
 
-printBoards();
+let printLists = () => {
+	trello.getWeekList((lists) => {
+		if (!lists) {
+			console.error("Error retrieving lists.");
+		} else {
+			console.log("Lists:");
+			for (let list in lists) {
+				console.log(JSON.stringify(lists[list]));
+			}
+		}
+	});
+}
+
+printLists(); 
+
+
+
+
+
+
+
+
+
+
+

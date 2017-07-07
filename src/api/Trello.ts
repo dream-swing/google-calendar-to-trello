@@ -7,6 +7,8 @@ import * as Util from "./../shared/Utilities";
 
 const TOKEN_PATH = Constants.TOKEN_DIR + "trello-auth.json";
 const TRELLO_URI = 'https://api.trello.com/1';
+const WEEKLY_PLANNER_BOARDID = "59387c00db4e82fa3c3825b3";
+const TEST_BOARDID = "595fcd34efd0be9149f39649";
 
 let getTokenToRun = (callback) => {
 	fs.readFile(TOKEN_PATH, (err, content) => {
@@ -21,15 +23,36 @@ let getTokenToRun = (callback) => {
 }
 
 export let getBoards = (callback) => {
-	getTokenToRun((token) => {
-		let queryString = Util.constructQueryString(token);
-		let url = TRELLO_URI + "/member/me/boards" + queryString;
+	getRequest("/member/me/boards", {}, callback);
+}
 
+export let getWeekList = (callback) => {
+	let params = {
+		"cards": "open",
+		"card_fields": "name",
+		"fields": "name"
+	};
+	getRequest(`/boards/${TEST_BOARDID}/lists`, params, (allTheLists) => {
+		let listsWeWant = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+		let outputList = {};
+		for (let list of allTheLists) {
+			if (listsWeWant.includes(list.name)) {
+				outputList[list.name] = list;
+			}
+		}
+		callback(outputList);
+	});
+}
+
+let getRequest = (path: string, queryParams: any, callback) => {
+	getTokenToRun((token) => {
+		let queryString = Util.constructQueryString(Object.assign({}, token, queryParams));
+		let url = TRELLO_URI + path + queryString;
 		https.get(url, (response) => {
 			const { statusCode } = response;
 
 			if (statusCode !== 200) {
-				console.error("Trello get boards request failed. Status code: %s", statusCode);
+				console.error("Trello GET request failed. Status code: %s", statusCode);
 				response.resume();
 				return;
 			}
@@ -48,3 +71,15 @@ export let getBoards = (callback) => {
 		});
 	});
 }
+
+
+
+
+
+
+
+
+
+
+
+

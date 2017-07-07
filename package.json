@@ -4,6 +4,7 @@
   "description": "Forward upcoming Google Calendar events to Trello weekly planner board",
   "main": "index.js",
   "scripts": {
+    "start": "tsc && node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

@@ -4,5 +4,6 @@ export let constructQueryString = (queryObj) => {
 		let value = queryObj[key];
 		queryString += key + "=" + value + "&";
 	}
-	return queryString.substr(0, queryString.length - 1);
+	queryString = queryString.substr(0, queryString.length - 1);
+	return queryString;
 }
