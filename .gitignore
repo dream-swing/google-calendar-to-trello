@@ -57,6 +57,9 @@ typings/
 # dotenv environment variables file
 .env
 
-#secrets
+# secrets
 secrets/
+
+# generated js files
+src/**/*.js
 
