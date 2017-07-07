@@ -9,41 +9,13 @@ const TOKEN_PATH = Constants.TOKEN_DIR + "trello-auth.json";
 const TRELLO_HOST = "api.trello.com";
 const TRELLO_API_VER = "/1";
 const TRELLO_URI = `https://${TRELLO_HOST}${TRELLO_API_VER}`;
-const WEEKLY_PLANNER_BOARDID = "59387c00db4e82fa3c3825b3";
-const TEST_BOARDID = "595fcd34efd0be9149f39649";
-
-let getTokenToRun = (callback) => {
-	fs.readFile(TOKEN_PATH, (err, content) => {
-		if (err) {
-			console.error("Error loading Trello token. " + err);
-			return;
-		}
-
-		let token = JSON.parse(content.toString("utf8"));
-		callback(token);
-	});
-}
 
 export let getBoards = (callback) => {
 	getRequest("/member/me/boards", {}, callback);
 }
 
-export let getWeekList = (callback) => {
-	let params = {
-		"cards": "open",
-		"card_fields": "name",
-		"fields": "name"
-	};
-	getRequest(`/boards/${TEST_BOARDID}/lists`, params, (allTheLists) => {
-		let listsWeWant = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-		let outputList = {};
-		for (let list of allTheLists) {
-			if (listsWeWant.includes(list.name)) {
-				outputList[list.name] = list;
-			}
-		}
-		callback(outputList);
-	});
+export let getListsAndCardsOnBoard = (boardId: string, params, callback) => {
+	getRequest(`/boards/${boardId}/lists`, params, callback);
 }
 
 export let createCard = (listId: string, cardName: string) => {
@@ -127,6 +99,18 @@ let postRequest = (path: string, queryParams: any, postData: any, callback) => {
 
 		request.write(postDataString);
 		request.end();
+	});
+}
+
+let getTokenToRun = (callback) => {
+	fs.readFile(TOKEN_PATH, (err, content) => {
+		if (err) {
+			console.error("Error loading Trello token. " + err);
+			return;
+		}
+
+		let token = JSON.parse(content.toString("utf8"));
+		callback(token);
 	});
 }
 

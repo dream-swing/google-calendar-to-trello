@@ -1,79 +1,63 @@
-import * as gCal from "./api/GoogleCalendar";
-import * as trello from "./api/Trello";
+import * as gCal from "./services/GoogleCalendarService";
+import * as trello from "./services/TrelloService";
+import * as trelloAPI from "./api/TrelloAPI";
 import * as moment from "moment";
 
-let listEvents = () => {
-	let today = moment();
-	let dayOfWeek: number = today.day();
+const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-	let timeMin: string = today.toDate().toISOString();
-	let timeMax: string = today.toDate().toISOString();
-
-	if (dayOfWeek == 5) {
-		// today is Friday
-		// we want min to be tomorrow, and max to be next Sat midnight
-		timeMin = moment(today).startOf("day").add(1, "days").toDate().toISOString();
-		timeMax = moment(today).startOf("day").add(8, "days").toDate().toISOString();
-	} else {
-		// all days except Friday
-		// we want min to be right now, and max to be this Sat midnight
-		// no need to set timeMin because it's already now
-		if (dayOfWeek == 6) {
-			// today is Saturday
-			// set dayOfWeek to -1 so timeMax is actually a week from now
-			dayOfWeek = -1;
-		}
-		timeMax = moment(today).startOf("day").add(7 - (dayOfWeek + 1), "days").toDate().toISOString();
-	}
-
-	console.log("timeMin: %s, timeMax: %s", moment(timeMin).format("LLLL"), moment(timeMax).format("LLLL"));
-
-	gCal.listSingleEventsInRange(timeMin, timeMax, printEvents);
-}
-
-let printEvents = (events) => {
-	if (!events) {
-		console.log("Error retrieving events");
-	} else if (events.length == 0) {
-		console.log("No upcoming events found.");
-	} else {
-		console.log("Events this week:");
-		for (let i: number = 0; i < events.length; i++) {
-			let event = events[i];
-			let start: string = "";
-			if (event.start.dateTime) {
-				start = moment(event.start.dateTime).format("h:mma") + " ";
-			}
-			console.log(start + event.summary);
-		}
-	}
-}
-
-let printBoards = () => {
-	trello.getBoards((boards) => {
-		if (!boards) {
-			console.error("Error retrieving boards.");
+let main = () => {
+	// grab weekly calendar
+	gCal.getWeeklyEvents((events) => {
+		if (!events) {
+			console.error("Error retrieving weekly Google events");
+		} else if (events.length == 0) {
+			console.log("No upcoming events found.");
 		} else {
-			console.log("All your boards:");
-			for (let board of boards) {
-				console.log(board.name);
-			}
+			trello.getWeekdayLists((weekdayLists) => {
+				for (let event of events) {
+					if (!isEventOnBoard(event, weekdayLists)) {
+						let list = getListEventBelongsTo(event, weekdayLists);
+						createCard(list, event);
+					}
+				}
+			});
 		}
 	});
 }
 
-let AddCardToList = () => {
-	trello.getWeekList((lists) => {
-		if (!lists) {
-			console.error("Error retrieving lists.");
-		} else {
-			let satList = lists["Saturday"];
-			trello.createCard(satList.id, "Test card created!");
-		}
-	});
+let createCard = (list, event) => {
+	let cardTitle = getCardNameFromEvent(event);
+	trelloAPI.createCard(list.id, cardTitle);
 }
 
-AddCardToList();
+let isEventOnBoard = (event, weekdayLists): boolean => {
+	let list = getListEventBelongsTo(event, weekdayLists);
+	for (let card of list.cards) {
+		if (card.name == getCardNameFromEvent(event)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+let getListEventBelongsTo = (event, weekdayLists) => {
+	let eventStart: string = (event.start.date || event.start.dateTime);
+	let eventDay: number = moment(eventStart).day();
+	let eventDayWords: string = DAYS_OF_WEEK[eventDay];
+	let list = weekdayLists[eventDayWords];
+	return list;
+}
+
+let getCardNameFromEvent = (event): string => {
+	let startTime: string = "";
+	if (event.start.dateTime) {
+		startTime = moment(event.start.dateTime).format("h:mma") + " ";
+	}
+	let cardTitle = startTime + event.summary;
+	return cardTitle;
+}
+
+main();
 
 
 

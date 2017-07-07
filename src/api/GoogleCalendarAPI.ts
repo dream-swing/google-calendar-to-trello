@@ -1,5 +1,5 @@
 import * as google from "googleapis";
-import * as googleAuth from "./GoogleAuth";
+import * as googleAuth from "./GoogleAuthAPI";
 
 /**
  * Lists single events in the time range specified. Time range params are specified
