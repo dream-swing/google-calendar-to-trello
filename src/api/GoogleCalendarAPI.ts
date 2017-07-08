@@ -26,6 +26,25 @@ export let listSingleEventsInRange = (timeMinISO: string, timeMaxISO: string, ca
 	});
 };
 
+export let getUpdatedEvents = (syncToken: string, callback) => {
+	googleAuth.processClientSecrets((auth) => {
+		let calendar = google.calendar("v3");
+		calendar.events.list({
+			auth: auth,
+			calendarId: "primary",
+			singleEvents: true,
+			syncToken: syncToken
+		}, (err, response) => {
+			if (err) {
+				console.error("Google API returned error: " + err);
+				return;
+			}
+
+			callback(response.items);
+		});
+	});
+}
+
 
 
 

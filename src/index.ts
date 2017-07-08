@@ -2,8 +2,13 @@ import * as gCal from "./services/GoogleCalendarService";
 import * as trello from "./services/TrelloService";
 import * as trelloAPI from "./api/TrelloAPI";
 import * as moment from "moment";
+import * as s3 from "./services/AwsS3Service";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+let testS3 = () => {
+	s3.storeSyncToken("test token");
+}
 
 let main = () => {
 	// grab weekly calendar
@@ -58,7 +63,7 @@ let getCardNameFromEvent = (event): string => {
 	return cardTitle;
 }
 
-main();
+testS3();
 
 
 
