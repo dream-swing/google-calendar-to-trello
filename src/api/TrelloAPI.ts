@@ -28,6 +28,10 @@ export let createCard = (listId: string, cardName: string) => {
 	postRequest(`${TRELLO_API_VER}/cards`, data, null, null);
 }
 
+export let deleteCard = (cardId: string) => {
+	deleteRequest(`/cards/${cardId}`, {});
+}
+
 let getRequest = (path: string, queryParams: any, callback) => {
 	getTokenToRun((token) => {
 		let queryString = Util.constructQueryString(Object.assign({}, token, queryParams));
@@ -57,13 +61,21 @@ let getRequest = (path: string, queryParams: any, callback) => {
 }
 
 let postRequest = (path: string, queryParams: any, postData: any, callback) => {
+	sendRequest("POST", path, queryParams, postData, callback);
+}
+
+let deleteRequest = (path: string, queryParams: any) => {
+	sendRequest("DELETE", path, queryParams, null, null);
+}
+
+let sendRequest = (method: string, path: string, queryParams: any, data: any, callback) => {
 	getTokenToRun((token) => {
 		let queryString = Util.constructQueryString(Object.assign({}, token, queryParams));
-		let postDataString = JSON.stringify(postData);
+		let postDataString = JSON.stringify(data);
 		const options = {
 			hostname: TRELLO_HOST,
 			path: path + queryString,
-			method: "POST",
+			method: method,
 			headers: {
 				"Content-Length": Buffer.byteLength(postDataString)
 			}
@@ -72,12 +84,12 @@ let postRequest = (path: string, queryParams: any, postData: any, callback) => {
 			const { statusCode } = response;
 
 			if (statusCode !== 200) {
-				console.error(`Trello POST request failed. Status code: ${statusCode}`);
+				console.error(`Trello ${method} request to ${path} failed. Status code: ${statusCode}`);
 				response.resume();
 				return;
 			}
 
-			console.log("Trello POST request success");
+			console.log(`Trello ${method} request to ${path} success`);
 
 			if (callback) {
 				let rawData = "";

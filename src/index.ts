@@ -2,12 +2,35 @@ import * as gCal from "./services/GoogleCalendarService";
 import * as trello from "./services/TrelloService";
 import * as trelloAPI from "./api/TrelloAPI";
 import * as moment from "moment";
-import * as s3 from "./services/AwsS3Service";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-let testS3 = () => {
-	s3.storeSyncToken("test token");
+/*
+deleted events:
+"items": [
+  {
+   "kind": "calendar#event",
+   "etag": "\"2998981515386000\"",
+   "id": "2206mtcss7hkg47q03gmfea1k2",
+   "status": "cancelled"
+  }
+ ]
+
+ Problem: they don't have names, so I have to store the event ID somewhere
+ TODO: test delete on Trello API
+ TODO: implement update card
+ TODO: store event ID in description (figure out difference between desc and descData)
+ TODO: store secrets in S3 instead of locally
+ */
+
+let checkUpdatedEvents = () => {
+	gCal.getCurrentWeekUpdatedEvents((events) => {
+		trello.getWeekdayLists((weekdayLists) => {
+			for (let event of events) {
+
+			}
+		});
+	});
 }
 
 let main = () => {
@@ -63,7 +86,7 @@ let getCardNameFromEvent = (event): string => {
 	return cardTitle;
 }
 
-testS3();
+main();
 
 
 
