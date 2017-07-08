@@ -21,3 +21,8 @@ export let getWeekdayLists = (callback) => {
 		callback(outputList);
 	});
 }
+
+export let createCard = (list, cardName, cardDesc) => {
+	console.log(`Adding ${cardName} to list ${list.name}`);
+	trelloAPI.createCard(list.id, cardName, cardDesc);
+}

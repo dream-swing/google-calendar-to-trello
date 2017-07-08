@@ -1,6 +1,5 @@
 import * as gCal from "./services/GoogleCalendarService";
 import * as trello from "./services/TrelloService";
-import * as trelloAPI from "./api/TrelloAPI";
 import * as moment from "moment";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -55,8 +54,7 @@ let main = () => {
 
 let createCard = (list, event) => {
 	let cardTitle = getCardNameFromEvent(event);
-	console.log(`Adding ${cardTitle} to list ${list.name}`);
-	trelloAPI.createCard(list.id, cardTitle);
+	trello.createCard(list, cardTitle, "");
 }
 
 let isEventOnBoard = (event, weekdayLists): boolean => {

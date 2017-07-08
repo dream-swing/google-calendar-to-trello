@@ -18,10 +18,11 @@ export let getListsAndCardsOnBoard = (boardId: string, params, callback) => {
 	getRequest(`/boards/${boardId}/lists`, params, callback);
 }
 
-export let createCard = (listId: string, cardName: string) => {
+export let createCard = (listId: string, cardName: string, cardDesc: string) => {
 	let data = {
 		"idList": listId, // required
-		"name": encodeURIComponent(cardName)
+		"name": encodeURIComponent(cardName),
+		"desc": encodeURIComponent(cardDesc),
 	}
 	// apparently parameters have to be submitted through query string
 	// instead of request body
