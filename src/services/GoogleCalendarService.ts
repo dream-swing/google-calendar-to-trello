@@ -18,12 +18,26 @@ export let getCurrentWeekUpdatedEvents = (callback) => {
 		}
 
 		let thisWeekEvents = events.filter((event, index, eventsArr) => {
+			if (!event.start) {
+				// deleted events don't have a date, so just include it
+				return true;
+			}
+
 			let eventStart = moment(event.start.date || event.start.dateTime);
 			return eventStart.isSameOrAfter(timeMin) && eventStart.isBefore(timeMax);
 		});
 
 		callback(thisWeekEvents);
 	});
+}
+
+export let validateEventIsComplete = (event): boolean => {
+	let eventComplete: boolean = (event.start && event.summary);
+	if (!eventComplete) {
+		console.log(`Event complete validation failed for event ${event.id}`);
+	}
+
+	return eventComplete;
 }
 
 let getCurrentWeekTimeRange = () => {

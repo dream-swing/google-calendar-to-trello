@@ -6,7 +6,7 @@ const TEST_BOARDID = "595fcd34efd0be9149f39649";
 export let getWeekdayLists = (callback) => {
 	let params = {
 		"cards": "open",
-		"card_fields": "name",
+		"card_fields": "name,desc",
 		"fields": "name"
 	};
 	
@@ -22,7 +22,31 @@ export let getWeekdayLists = (callback) => {
 	});
 }
 
-export let createCard = (list, cardName, cardDesc) => {
+export let createCard = (list, cardName: string, cardDesc: string) => {
 	console.log(`Adding ${cardName} to list ${list.name}`);
 	trelloAPI.createCard(list.id, cardName, cardDesc);
+}
+
+export let deleteCard = (card) => {
+	console.log(`Deleting card ${card.name}...`);
+	trelloAPI.deleteCard(card.id);
+}
+
+/**
+ * if newDesc is null, then don't update it, keep the original content.
+ * However, if newDesc is empty string "", then clear it.
+ * Same rules apply to newName
+ */
+export let updateCard = (card, newName: string, newDesc: string) => {
+	if (newName === null) {
+		newName = card.name;
+	}
+
+	if (newDesc === null) {
+		newDesc = card.desc;
+	}
+
+	console.log(`Updating card ${card.name}. New name: ${newName}, new desc: ${newDesc}`);
+
+	trelloAPI.updateCard(card.id, newName, newDesc);
 }

@@ -23,14 +23,22 @@ export let createCard = (listId: string, cardName: string, cardDesc: string) => 
 		"idList": listId, // required
 		"name": encodeURIComponent(cardName),
 		"desc": encodeURIComponent(cardDesc),
-	}
+	};
 	// apparently parameters have to be submitted through query string
 	// instead of request body
 	postRequest(`${TRELLO_API_VER}/cards`, data, null, null);
 }
 
 export let deleteCard = (cardId: string) => {
-	deleteRequest(`/cards/${cardId}`, {});
+	deleteRequest(`${TRELLO_API_VER}/cards/${cardId}`, {});
+}
+
+export let updateCard = (cardId: string, cardName: string, cardDesc: string) => {
+	let data = {
+		"name": encodeURIComponent(cardName),
+		"desc": encodeURIComponent(cardDesc),
+	};
+	putRequest(`${TRELLO_API_VER}/cards/${cardId}`, data);
 }
 
 let getRequest = (path: string, queryParams: any, callback) => {
@@ -67,6 +75,10 @@ let postRequest = (path: string, queryParams: any, postData: any, callback) => {
 
 let deleteRequest = (path: string, queryParams: any) => {
 	sendRequest("DELETE", path, queryParams, null, null);
+}
+
+let putRequest = (path: string, queryParams: any) => {
+	sendRequest("PUT", path, queryParams, null, null);
 }
 
 let sendRequest = (method: string, path: string, queryParams: any, data: any, callback) => {

@@ -13,7 +13,8 @@ export let storeSyncToken = (syncToken: string) => {
 		let putParams = {
 			Bucket: BUCKET_NAME,
 			Key: SYNC_TOKEN_NAME,
-			Body: syncToken
+			Body: syncToken,
+			ContentType: "text/plain"
 		};
 		s3.putObject(putParams, (err, data) => {
 			if (err) {
@@ -42,8 +43,9 @@ export let getSyncToken = (callback) => {
 				console.error("Could not get sync token. " + err);
 				return;
 			}
-
-			callback(data.Body);
+			let token = data.Body.toString();
+			console.log("token from buffer: " + token);
+			callback(token);
 		});
 	});
 }

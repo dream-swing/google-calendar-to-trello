@@ -4,29 +4,24 @@ import * as moment from "moment";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-/*
-deleted events:
-"items": [
-  {
-   "kind": "calendar#event",
-   "etag": "\"2998981515386000\"",
-   "id": "2206mtcss7hkg47q03gmfea1k2",
-   "status": "cancelled"
-  }
- ]
-
- Problem: they don't have names, so I have to store the event ID somewhere
- TODO: test delete on Trello API
- TODO: implement update card
- TODO: store event ID in description (figure out difference between desc and descData)
- TODO: store secrets in S3 instead of locally
- */
-
 let checkUpdatedEvents = () => {
 	gCal.getCurrentWeekUpdatedEvents((events) => {
+		console.log("Retrieved updated events from Google Calendar. " + JSON.stringify(events));
 		trello.getWeekdayLists((weekdayLists) => {
 			for (let event of events) {
+				let card = findEventOnBoard(event, weekdayLists);
 
+				if (event.status == "cancelled") {
+					if (card) {
+						trello.deleteCard(card);
+					}
+				} else {
+					if (card) {
+						updateCard(card, event);
+					} else {
+						createCard(event, weekdayLists);
+					}
+				}
 			}
 		});
 	});
@@ -42,9 +37,9 @@ let main = () => {
 		} else {
 			trello.getWeekdayLists((weekdayLists) => {
 				for (let event of events) {
-					if (!isEventOnBoard(event, weekdayLists)) {
-						let list = getListEventBelongsTo(event, weekdayLists);
-						createCard(list, event);
+					let card = findEventOnBoard(event, weekdayLists);
+					if (!card) {
+						createCard(event, weekdayLists);
 					}
 				}
 			});
@@ -52,22 +47,75 @@ let main = () => {
 	});
 }
 
-let createCard = (list, event) => {
+let createCard = (event, weekdayLists) => {
+	if (!gCal.validateEventIsComplete(event)) {
+		console.error(`Error: Attempting to add an incomplete event.`);
+		return;
+	}
+
+	let list = getListEventBelongsTo(event, weekdayLists);
+
+	if (list === null) {
+		console.error("Finding list card belongs to failed. Cannot create card.");
+		return;
+	}
+
 	let cardTitle = getCardNameFromEvent(event);
-	trello.createCard(list, cardTitle, "");
+	trello.createCard(list, cardTitle, event.id);
 }
 
-let isEventOnBoard = (event, weekdayLists): boolean => {
+let updateCard = (card, updatedEvent) => {
+	if (!gCal.validateEventIsComplete(updatedEvent)) {
+		console.error(`Error: Attempting to update an card to an incomplete event.`);
+		return;
+	}
+
+	let newName = getCardNameFromEvent(updatedEvent);
+	trello.updateCard(card, newName, updatedEvent.id);
+}
+
+let findEventOnBoard = (event, weekdayLists) => {
 	let list = getListEventBelongsTo(event, weekdayLists);
+
+	if (list === null) {
+		// search all lists
+		console.log("Searching all lists.");
+		let eventName = event.summary || event.id;
+		for (let listName in weekdayLists) {
+			let card = findEventOnSingleList(event, weekdayLists[listName]);
+			if (card) {
+				return card;
+			}
+		}
+
+		console.log(`No corresponding card found for ${eventName} on board.`);
+		return false;
+	} else {
+		return findEventOnSingleList(event, list);
+	}
+}
+
+let findEventOnSingleList = (event, list) => {
+	let eventName = event.summary || event.id;
+	console.log(`Checking for event ${eventName} on list ${list.name}`);
 	for (let card of list.cards) {
-		if (card.name == getCardNameFromEvent(event)) {
-			return true;
+		if (card.desc == event.id) {
+			console.log(`Event found in list. cardName: ${card.name}, cardDesc: ${card.desc}`);
+			return card;
 		}
 	}
-	return false;
+
+	console.log(`No corresponding card found for ${eventName} on list ${list.name}`);
+	return null;
 }
 
 let getListEventBelongsTo = (event, weekdayLists) => {
+	if (!event.start) {
+		// updated events for deleted events don't have start dates
+		console.log("Event does not belong to any list.");
+		return null;
+	}
+
 	let eventStart: string = (event.start.date || event.start.dateTime);
 	let eventDay: number = moment(eventStart).day();
 	let eventDayWords: string = DAYS_OF_WEEK[eventDay];
@@ -76,15 +124,20 @@ let getListEventBelongsTo = (event, weekdayLists) => {
 }
 
 let getCardNameFromEvent = (event): string => {
+	if (!gCal.validateEventIsComplete(event)) {
+		console.error("Cannot create card name from incomplete event info.");
+		return null;
+	}
+
 	let startTime: string = "";
 	if (event.start.dateTime) {
 		startTime = moment(event.start.dateTime).format("h:mma") + " ";
 	}
-	let cardTitle = startTime + event.summary;
+	let cardTitle = `${startTime}[event] ${event.summary}`;
 	return cardTitle;
 }
 
-main();
+checkUpdatedEvents();
 
 
 
