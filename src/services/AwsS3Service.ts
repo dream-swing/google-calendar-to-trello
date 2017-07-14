@@ -7,45 +7,75 @@ const SYNC_TOKEN_NAME = "google-calendar-sync-token";
 let s3 = new aws.S3();
 
 export let storeSyncToken = (syncToken: string) => {
+	storeData(SYNC_TOKEN_NAME, syncToken, "text/plain", /*encrypt*/false);
+}
+
+export let getSyncToken = (callback) => {
+	getData(SYNC_TOKEN_NAME, (dataBody) => {
+		let token = dataBody.toString();
+		console.log("token from storage: " + token);
+		callback(token);
+	});
+}
+
+export let storeEncryptedAuth = (key: string, authData: any) => {
+	storeData(key, authData, "application/json", /*encrypt*/true);
+}
+
+export let getEncryptedAuth = (key: string, callback) => {
+	getData(key, (dataBody) => {
+		let jsonAuth = JSON.parse(dataBody.toString());
+		console.log("auth data: " + JSON.stringify(jsonAuth));
+		callback(jsonAuth);
+	});
+}
+
+let storeData = (key: string, bodyContent, contentType: string, encrypt: boolean) => {
 	ensureBucketExist();
 
 	s3.waitFor("bucketExists", { Bucket: BUCKET_NAME }, (err, data) => {
+		if (typeof bodyContent !== "string") {
+			bodyContent = JSON.stringify(bodyContent);
+		}
+
 		let putParams = {
 			Bucket: BUCKET_NAME,
-			Key: SYNC_TOKEN_NAME,
-			Body: syncToken,
-			ContentType: "text/plain"
+			Key: key,
+			Body: bodyContent,
+			ContentType: contentType
 		};
+		if (encrypt) {
+			putParams["ServerSideEncryption"] = "AES256";
+		}
 		s3.putObject(putParams, (err, data) => {
 			if (err) {
-				console.error("Storing sync token failed. " + err);
+				console.error(`Storing data to key ${key} failed. ${err}`);
 				return;
 			}
 
-			console.log("Sync token stored successfully. ETag: " + data.ETag);
+			console.log(`${key} data stored successfully. ETag: ${data.ETag}`);
 		});
 	});
 }
 
-export let getSyncToken = (callback) => {
+let getData = (key: string, callback) => {
 	bucketExist((doesExist) => {
 		if (!doesExist) {
-			console.error("Bucket does not exist, can't retrieve sync token.");
+			console.error("Bucket does not exist, can't retrieve data.");
 			return;
 		}
 
 		let getParams = {
 			Bucket: BUCKET_NAME,
-			Key: SYNC_TOKEN_NAME
+			Key: key
 		};
 		s3.getObject(getParams, (err, data) => {
 			if (err) {
-				console.error("Could not get sync token. " + err);
+				console.error(`Could not retrieve data for ${key}. ${err}`);
 				return;
 			}
-			let token = data.Body.toString();
-			console.log("token from buffer: " + token);
-			callback(token);
+			console.log("Encryption used: " + data.ServerSideEncryption);
+			callback(data.Body);
 		});
 	});
 }

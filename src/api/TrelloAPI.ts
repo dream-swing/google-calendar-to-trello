@@ -3,9 +3,10 @@ import * as fs from "fs";
 
 import * as Constants from "./../shared/Constants";
 import * as Util from "./../shared/Utilities";
-
+import * as s3 from "./../services/AwsS3Service";
 
 const TOKEN_PATH = Constants.TOKEN_DIR + "trello-auth.json";
+const TOKEN_S3_KEY = "trello-auth";
 const TRELLO_HOST = "api.trello.com";
 const TRELLO_API_VER = "/1";
 const TRELLO_URI = `https://${TRELLO_HOST}${TRELLO_API_VER}`;
@@ -39,6 +40,12 @@ export let updateCard = (cardId: string, cardName: string, cardDesc: string) => 
 		"desc": encodeURIComponent(cardDesc),
 	};
 	putRequest(`${TRELLO_API_VER}/cards/${cardId}`, data);
+}
+
+export let storeToken = () => {
+	readLocalToken((token) => {
+		s3.storeEncryptedAuth(TOKEN_S3_KEY, token);
+	});
 }
 
 let getRequest = (path: string, queryParams: any, callback) => {
@@ -128,6 +135,10 @@ let sendRequest = (method: string, path: string, queryParams: any, data: any, ca
 }
 
 let getTokenToRun = (callback) => {
+	s3.getEncryptedAuth(TOKEN_S3_KEY, callback);
+}
+
+let readLocalToken = (callback) => {
 	fs.readFile(TOKEN_PATH, (err, content) => {
 		if (err) {
 			console.error("Error loading Trello token. " + err);

@@ -50,3 +50,7 @@ export let updateCard = (card, newName: string, newDesc: string) => {
 
 	trelloAPI.updateCard(card.id, newName, newDesc);
 }
+
+export let storeTokenToS3 = () => {
+	trelloAPI.storeToken();
+}
