@@ -13,8 +13,7 @@ export let getCurrentWeekUpdatedEvents = (callback) => {
 	let { timeMin, timeMax } = getCurrentWeekTimeRange();
 	gCal.getUpdatedEvents((events) => {
 		if (!events) {
-			console.error("Error getting events.");
-			return;
+			throw new Error("Error getting events.");
 		}
 
 		let thisWeekEvents = events.filter((event, index, eventsArr) => {

@@ -56,21 +56,16 @@ let getRequest = (path: string, queryParams: any, callback) => {
 			const { statusCode } = response;
 
 			if (statusCode !== 200) {
-				console.error(`Trello GET request failed. Status code: ${statusCode}`);
 				response.resume();
-				return;
+				throw new Error(`Trello GET request failed. Status code: ${statusCode}`);
 			}
 
 			response.setEncoding("utf8");
 			let rawData = "";
 			response.on("data", (chunk) => { rawData += chunk; });
 			response.on("end", () => {
-				try {
-					let parsedData = JSON.parse(rawData);
-					callback(parsedData);
-				} catch (err) {
-					console.error(err.message);
-				}
+				let parsedData = JSON.parse(rawData);
+				callback(parsedData);
 			});
 		});
 	});
@@ -104,9 +99,8 @@ let sendRequest = (method: string, path: string, queryParams: any, data: any, ca
 			const { statusCode } = response;
 
 			if (statusCode !== 200) {
-				console.error(`Trello ${method} request to ${path} failed. Status code: ${statusCode}`);
 				response.resume();
-				return;
+				throw new Error(`Trello ${method} request to ${path} failed. Status code: ${statusCode}`);
 			}
 
 			console.log(`Trello ${method} request to ${path} success`);
@@ -115,18 +109,14 @@ let sendRequest = (method: string, path: string, queryParams: any, data: any, ca
 				let rawData = "";
 				response.on("data", (chunk) => { rawData += chunk });
 				response.on("end", () => {
-					try {
-						let parsedData = JSON.parse(rawData);
-						callback(parsedData);
-					} catch (err) {
-						console.error(err.message);
-					}
+					let parsedData = JSON.parse(rawData);
+					callback(parsedData);
 				})
 			}
 		});
 
 		request.on("error", (err) => {
-			console.error(`Request error. ${err}`);
+			throw new Error(`Request error. ${err}`);
 		});
 
 		request.write(postDataString);
@@ -141,8 +131,7 @@ let getTokenToRun = (callback) => {
 let readLocalToken = (callback) => {
 	fs.readFile(TOKEN_PATH, (err, content) => {
 		if (err) {
-			console.error("Error loading Trello token. " + err);
-			return;
+			throw new Error("Error loading Trello token. " + err);
 		}
 
 		let token = JSON.parse(content.toString("utf8"));

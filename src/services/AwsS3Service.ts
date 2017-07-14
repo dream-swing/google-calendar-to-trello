@@ -48,8 +48,7 @@ let storeData = (key: string, bodyContent, contentType: string, encrypt: boolean
 		}
 		s3.putObject(putParams, (err, data) => {
 			if (err) {
-				console.error(`Storing data to key ${key} failed. ${err}`);
-				return;
+				throw new Error(`Storing data to key ${key} failed. ${err}`);
 			}
 
 			console.log(`${key} data stored successfully. ETag: ${data.ETag}`);
@@ -60,8 +59,7 @@ let storeData = (key: string, bodyContent, contentType: string, encrypt: boolean
 let getData = (key: string, callback) => {
 	bucketExist((doesExist) => {
 		if (!doesExist) {
-			console.error("Bucket does not exist, can't retrieve data.");
-			return;
+			throw new Error("Bucket does not exist, can't retrieve data.");
 		}
 
 		let getParams = {
@@ -70,8 +68,7 @@ let getData = (key: string, callback) => {
 		};
 		s3.getObject(getParams, (err, data) => {
 			if (err) {
-				console.error(`Could not retrieve data for ${key}. ${err}`);
-				return;
+				throw new Error(`Could not retrieve data for ${key}. ${err}`);
 			}
 			console.log("Encryption used: " + data.ServerSideEncryption);
 			callback(data.Body);
@@ -90,8 +87,7 @@ let ensureBucketExist = () => {
 			}
 			s3.createBucket(createParams, (err, data) => {
 				if (err) {
-					console.error("Error creating S3 bucket. " + err);
-					return;
+					throw new Error("Error creating S3 bucket. " + err);
 				}
 
 				console.log(`Bucket ${BUCKET_NAME} created in location: ${data.Location}`);

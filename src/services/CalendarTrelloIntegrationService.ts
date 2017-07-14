@@ -30,7 +30,7 @@ export let checkUpdatedEvents = () => {
 export let populateTrelloWithWeeklyEvent = () => {
 	gCal.getWeeklyEvents((events) => {
 		if (!events) {
-			console.error("Error retrieving weekly Google events");
+			throw new Error("Error retrieving weekly Google events");
 		} else if (events.length == 0) {
 			console.log("No upcoming events found.");
 		} else {
@@ -48,15 +48,13 @@ export let populateTrelloWithWeeklyEvent = () => {
 
 let createCard = (event, weekdayLists) => {
 	if (!gCal.validateEventIsComplete(event)) {
-		console.error(`Error: Attempting to add an incomplete event.`);
-		return;
+		throw new Error(`Error: Attempting to add an incomplete event.`);
 	}
 
 	let list = getListEventBelongsTo(event, weekdayLists);
 
 	if (list === null) {
-		console.error("Finding list card belongs to failed. Cannot create card.");
-		return;
+		throw new Error("Finding list card belongs to failed. Cannot create card.");
 	}
 
 	let cardTitle = getCardNameFromEvent(event);
@@ -65,8 +63,7 @@ let createCard = (event, weekdayLists) => {
 
 let updateCard = (card, updatedEvent) => {
 	if (!gCal.validateEventIsComplete(updatedEvent)) {
-		console.error(`Error: Attempting to update an card to an incomplete event.`);
-		return;
+		throw new Error(`Error: Attempting to update an card to an incomplete event.`);
 	}
 
 	let newName = getCardNameFromEvent(updatedEvent);
@@ -124,8 +121,7 @@ let getListEventBelongsTo = (event, weekdayLists) => {
 
 let getCardNameFromEvent = (event): string => {
 	if (!gCal.validateEventIsComplete(event)) {
-		console.error("Cannot create card name from incomplete event info.");
-		return null;
+		throw new Error("Cannot create card name from incomplete event info.");
 	}
 
 	let startTime: string = "";

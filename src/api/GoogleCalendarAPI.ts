@@ -17,8 +17,7 @@ export let listSingleEventsInRange = (timeMinISO: string, timeMaxISO: string, ca
 			singleEvents: true,
 		}, (err, response) => {
 			if (err) {
-				console.error("The API returned an error: " + err);
-				return;
+				throw new Error("The API returned an error: " + err);
 			}
 
 			storeSyncToken(response.nextSyncToken);
@@ -30,8 +29,7 @@ export let listSingleEventsInRange = (timeMinISO: string, timeMaxISO: string, ca
 export let getUpdatedEvents = (callback) => {
 	s3.getSyncToken((syncToken) => {
 		if (!syncToken) {
-			console.error("No sync token for updating event.");
-			return;
+			throw new Error("No sync token for updating event.");
 		}
 		
 		googleAuth.processClientSecrets((auth) => {
@@ -42,8 +40,7 @@ export let getUpdatedEvents = (callback) => {
 				syncToken: syncToken
 			}, (err, response) => {
 				if (err) {
-					console.error("Google API returned error: " + err);
-					return;
+					throw new Error("Google API returned error: " + err);
 				}
 
 				storeSyncToken(response.nextSyncToken);
@@ -55,8 +52,7 @@ export let getUpdatedEvents = (callback) => {
 
 let storeSyncToken = (syncToken: string) => {
 	if (!syncToken) {
-		console.error("No sync token returned from initial sync.");
-		return;
+		throw new Error("No sync token returned from initial sync.");
 	}
 
 	s3.storeSyncToken(syncToken);

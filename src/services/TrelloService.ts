@@ -1,4 +1,5 @@
 import * as trelloAPI from "./../api/TrelloAPI";
+import * as process from "process";
 
 const WEEKLY_PLANNER_BOARDID = "59387c00db4e82fa3c3825b3";
 const TEST_BOARDID = "595fcd34efd0be9149f39649";
@@ -9,8 +10,13 @@ export let getWeekdayLists = (callback) => {
 		"card_fields": "name,desc",
 		"fields": "name"
 	};
+
+	let boardId = WEEKLY_PLANNER_BOARDID;
+	if (process.env["useTestTrelloBoard"] == "true") {
+		boardId = TEST_BOARDID;
+	}
 	
-	trelloAPI.getListsAndCardsOnBoard(TEST_BOARDID, params, (allTheLists) => {
+	trelloAPI.getListsAndCardsOnBoard(boardId, params, (allTheLists) => {
 		let listsWeWant = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 		let outputList = {};
 		for (let list of allTheLists) {

@@ -21,7 +21,7 @@ export let processClientSecrets = (callback) => {
 export let storeSecretsToS3 = () => {
 	fs.readFile(CLIENT_SECRETS, (err, content) => {
 		if (err) {
-			console.error("Error loading Google client secret file. " + err);
+			throw new Error("Error loading Google client secret file. " + err);
 		} else {
 			s3.storeEncryptedAuth(GOOGLE_CLIENT_SECRET_S3_KEY, JSON.parse(content.toString("utf8")));			
 		}
@@ -29,7 +29,7 @@ export let storeSecretsToS3 = () => {
 
 	fs.readFile(TOKEN_PATH, (err, token) => {
 		if (err) {
-			console.error("Error loading Google credentials. " + err);
+			throw new Error("Error loading Google credentials. " + err);
 		} else {
 			s3.storeEncryptedAuth(GOOGLE_AUTH_S3_KEY, JSON.parse(token.toString("utf8")));
 		}
@@ -82,8 +82,7 @@ let getNewToken = (oauth2Client) => {
 		rl.close();
 		oauth2Client.getToken(code, (err, token) => {
 			if (err) {
-				console.error("Error while trying to retrieve access token", err);
-				return;
+				throw new Error("Error while trying to retrieve access token " + err);
 			}
 			storeToken(token);
 		});
