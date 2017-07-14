@@ -2,9 +2,9 @@
   "name": "google-calendar-to-trello",
   "version": "1.0.0",
   "description": "Forward upcoming Google Calendar events to Trello weekly planner board",
-  "main": "index.js",
+  "main": "build/index.js",
   "scripts": {
-    "start": "tsc && node src/index.js",
+    "start": "tsc && node build/index.js",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

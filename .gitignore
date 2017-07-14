@@ -62,6 +62,7 @@ secrets/
 
 # generated js files
 src/**/*.js
+build/
 
 # sublime files
 *.sublime-project
