@@ -25,7 +25,6 @@ export let storeEncryptedAuth = (key: string, authData: any) => {
 export let getEncryptedAuth = (key: string, callback) => {
 	getData(key, (dataBody) => {
 		let jsonAuth = JSON.parse(dataBody.toString());
-		console.log("auth data: " + JSON.stringify(jsonAuth));
 		callback(jsonAuth);
 	});
 }

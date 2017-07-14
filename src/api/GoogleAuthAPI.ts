@@ -4,19 +4,46 @@ import * as googleAuth from "google-auth-library";
 import * as process from "process";
 
 import * as Constants from "./../shared/Constants";
+import * as s3 from "./../services/AwsS3Service";
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"];
 const TOKEN_PATH:string = Constants.TOKEN_DIR + "google-auth.json";
 const CLIENT_SECRETS: string = "secrets/client_secret.json";
+const GOOGLE_AUTH_S3_KEY: string = "google-auth";
+const GOOGLE_CLIENT_SECRET_S3_KEY: string = "google-client-secret";
 
 export let processClientSecrets = (callback) => {
+	s3.getEncryptedAuth(GOOGLE_CLIENT_SECRET_S3_KEY, (clientSecret) => {
+		authorize(clientSecret, callback);
+	});
+}
+
+export let storeSecretsToS3 = () => {
 	fs.readFile(CLIENT_SECRETS, (err, content) => {
 		if (err) {
 			console.error("Error loading Google client secret file. " + err);
-			return;
+		} else {
+			s3.storeEncryptedAuth(GOOGLE_CLIENT_SECRET_S3_KEY, JSON.parse(content.toString("utf8")));			
 		}
+	});
 
-		authorize(JSON.parse(content.toString("utf8")), callback);
+	fs.readFile(TOKEN_PATH, (err, token) => {
+		if (err) {
+			console.error("Error loading Google credentials. " + err);
+		} else {
+			s3.storeEncryptedAuth(GOOGLE_AUTH_S3_KEY, JSON.parse(token.toString("utf8")));
+		}
+	});
+}
+
+/**
+ * Creates an OAuth2 client by retrieving client secret, and prompts user
+ * for authorization. The authorized token is stored both on disk and on S3
+ */
+export let promptForNewToken = () => {
+	s3.getEncryptedAuth(GOOGLE_CLIENT_SECRET_S3_KEY, (clientSecret) => {
+		let oauth2Client = createOauth2Client(clientSecret);
+		getNewToken(oauth2Client);
 	});
 }
 
@@ -28,31 +55,20 @@ export let processClientSecrets = (callback) => {
  * @param {function} callback The callback to call with the authorized client.
  */
 let authorize = (credentials, callback) => {
-	let clientSecret = credentials.installed.client_secret;
-	let clientId = credentials.installed.client_id;
-	let redirectUrl = credentials.installed.redirect_uris[0];
-	let auth = new googleAuth();
-	let oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+	let oauth2Client = createOauth2Client(credentials);
 
-	fs.readFile(TOKEN_PATH, (err, token) => {
-		if (err) {
-			getNewToken(oauth2Client, callback);
-		} else {
-			oauth2Client.credentials = JSON.parse(token.toString("utf8"));
-			callback(oauth2Client);
-		}
+	s3.getEncryptedAuth(GOOGLE_AUTH_S3_KEY, (token) => {
+		oauth2Client.credentials = token;
+		callback(oauth2Client);
 	});
 }
 
 /**
- * Get and store new token after prompting for user authorization, and then
- * execute the given callback with the authorized OAuth2 client.
+ * Get and store new token after prompting for user authorization
  *
  * @param {google.auth.OAuth2} oauth2Client The OAuth2 client to get token for.
- * @param {getEventsCallback} callback The callback to call with the authorized
- *     client.
  */
-let getNewToken = (oauth2Client, callback) => {
+let getNewToken = (oauth2Client) => {
 	let authUrl = oauth2Client.generateAuthUrl({
 		access_type: "offline",
 		scope: SCOPES
@@ -69,9 +85,7 @@ let getNewToken = (oauth2Client, callback) => {
 				console.error("Error while trying to retrieve access token", err);
 				return;
 			}
-			oauth2Client.credentials = token;
 			storeToken(token);
-			callback(oauth2Client);
 		});
 	});
 }
@@ -91,6 +105,17 @@ let storeToken = (token) => {
 	}
 	fs.writeFile(TOKEN_PATH, JSON.stringify(token));
 	console.log("Token stored to " + TOKEN_PATH);
+
+	s3.storeEncryptedAuth(GOOGLE_AUTH_S3_KEY, token);
+}
+
+let createOauth2Client = (credentials) => {
+	let clientSecret = credentials.installed.client_secret;
+	let clientId = credentials.installed.client_id;
+	let redirectUrl = credentials.installed.redirect_uris[0];
+	let auth = new googleAuth();
+	let oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+	return oauth2Client;
 }
 
 
