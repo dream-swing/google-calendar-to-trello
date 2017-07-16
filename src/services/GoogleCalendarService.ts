@@ -1,5 +1,5 @@
 import * as gCal from "./../api/GoogleCalendarAPI";
-import * as moment from "moment";
+import * as moment from "moment-timezone";
 import * as s3 from "./AwsS3Service";
 
 export let getWeeklyEvents = (callback) => {
@@ -40,7 +40,7 @@ export let validateEventIsComplete = (event): boolean => {
 }
 
 let getCurrentWeekTimeRange = () => {
-	let today = moment();
+	let today = moment().tz("America/New_York");
 	let dayOfWeek: number = today.day();
 
 	let timeMin: Date = today.toDate();

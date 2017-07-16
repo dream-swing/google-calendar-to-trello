@@ -1,6 +1,6 @@
 import * as gCal from "./GoogleCalendarService";
 import * as trello from "./TrelloService";
-import * as moment from "moment";
+import * as moment from "moment-timezone";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -126,7 +126,7 @@ let getCardNameFromEvent = (event): string => {
 
 	let startTime: string = "";
 	if (event.start.dateTime) {
-		startTime = moment(event.start.dateTime).format("h:mma") + " ";
+		startTime = moment(event.start.dateTime).tz("America/New_York").format("h:mma") + " ";
 	}
 	let cardTitle = `${startTime}[event] ${event.summary}`;
 	return cardTitle;
