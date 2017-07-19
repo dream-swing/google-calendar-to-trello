@@ -113,7 +113,7 @@ let getListEventBelongsTo = (event, weekdayLists) => {
 	}
 
 	let eventStart: string = (event.start.date || event.start.dateTime);
-	let eventDay: number = moment(eventStart).day();
+	let eventDay: number = moment(eventStart).tz("America/New_York").day();
 	let eventDayWords: string = DAYS_OF_WEEK[eventDay];
 	let list = weekdayLists[eventDayWords];
 	return list;
