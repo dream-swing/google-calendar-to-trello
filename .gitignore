@@ -60,9 +60,10 @@ typings/
 # secrets
 secrets/
 
-# generated js files
+# generated files
 src/**/*.js
 build/
+out/
 
 # sublime files
 *.sublime-project
