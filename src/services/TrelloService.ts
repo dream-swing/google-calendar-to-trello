@@ -20,8 +20,10 @@ export let getWeekdayLists = (callback) => {
 		let listsWeWant = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 		let outputList = {};
 		for (let list of allTheLists) {
-			if (listsWeWant.includes(list.name)) {
-				outputList[list.name] = list;
+			for (let weekday of listsWeWant) {
+				if (list.name.includes(weekday)) {
+					outputList[weekday] = list;
+				}
 			}
 		}
 		callback(outputList);
