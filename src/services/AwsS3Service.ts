@@ -70,7 +70,6 @@ let getData = (key: string, callback) => {
 			if (err) {
 				throw new Error(`Could not retrieve data for ${key}. ${err}`);
 			}
-			console.log("Encryption used: " + data.ServerSideEncryption);
 			callback(data.Body);
 		});
 	});
@@ -102,7 +101,6 @@ let bucketExist = (callback) => {
 			console.log("headBucket returned error. " + err);
 			callback(false);
 		} else {
-			console.log(`Bucket ${BUCKET_NAME} exists.`);
 			callback(true);
 		}
 	})
