@@ -5,6 +5,7 @@ import * as Constants from "./../shared/Constants";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const EVENT_IDENTIFIER = "[event]";
+const DAY_START_HOUR = 10;
 
 export let checkUpdatedEvents = () => {
 	gCal.getCurrentWeekUpdatedEvents((events) => {
@@ -56,15 +57,15 @@ export let resetBoard = () => {
 			for (let i: number = 0; i < cards.length; i++) {
 				let card = cards[i];
 				if (trello.isDoneSeparatorCard(card)) {
-					trello.moveCardToTop(card);
+					// trello.moveCardToTop(card);
 				} else {
 					if (!isEventCard(card)) {
 						let startTime: Date = getStartTimeForCard(list, card, i);
-						gCal.addEventToTask(card.name, startTime);
+						//gCal.addEventToTask(card.name, startTime);
 					}
-					if (!trello.isRecurringCard(card)) {
-						trello.deleteCard(card);
-					}
+					// if (!trello.isRecurringCard(card)) {
+					// 	trello.deleteCard(card);
+					// }
 				}
 			}
 			// update list name
@@ -167,8 +168,28 @@ let getCardNameFromEvent = (event): string => {
 }
 
 let getStartTimeForCard = (list, card, index: number): Date => {
-	// TODO: do date time math
-	return new Date();
+	let {month, day} = getMonthDayFromListName(list.name);
+	let thisYear: number = moment().year();
+	let year: number = thisYear;
+	// if we're in the new year (Jan) and we're logging December's events
+	// subtract one from current year
+	if (moment([thisYear, month, day]).isAfter(moment().add("1", "d"))) {
+		year = thisYear - 1;
+	}
+	let hour: number = DAY_START_HOUR + index;
+	let startTime = moment.tz([year, month, day, hour], Constants.TIMEZONE).toDate();
+	console.log(`Start time for ${card.name} constructed to be ${startTime}`);
+	return startTime;
+}
+
+let getMonthDayFromListName = (listName: string) => {
+	let dateReg = /(\d{1,2})\/(\d{1,2})/g;
+	let regMatches = dateReg.exec(listName);
+	console.log("matches: " + regMatches);
+	return {
+		"month": parseInt(regMatches[1]) - 1, // month in code is 0 based
+		"day": parseInt(regMatches[2])
+	};
 }
 
 let isEventCard = (card): boolean => {

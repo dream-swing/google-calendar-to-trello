@@ -1,5 +1,4 @@
 import * as trelloAPI from "./../api/TrelloAPI";
-import * as process from "process";
 import * as Constants from "./../shared/Constants";
 
 const WEEKLY_PLANNER_BOARDID = "59387c00db4e82fa3c3825b3";
@@ -96,7 +95,8 @@ export let storeTokenToS3 = () => {
 }
 
 let getBoardId = () => {
-	if (process.env["useTestTrelloBoard"] == "true") {
+	if (Constants.DEBUG) {
+		console.log("Using test Trello board.");
 		return TEST_BOARDID;
 	} else {
 		return WEEKLY_PLANNER_BOARDID;

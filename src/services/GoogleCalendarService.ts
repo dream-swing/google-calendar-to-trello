@@ -4,6 +4,7 @@ import * as s3 from "./AwsS3Service";
 import * as Constants from "./../shared/Constants";
 
 const TASK_CALENDAR_ID = "7gbqp1gdlr9vkg2l7j7kkfa71g@group.calendar.google.com";
+const TEST_TASK_CALENDAR_ID = "gc1bpqfc1i5rvaeef0l913b8bk@group.calendar.google.com";
 
 export let getWeeklyEvents = (callback) => {
 	let { timeMin, timeMax } = getCurrentWeekTimeRange();
@@ -53,7 +54,7 @@ export let addEventToTask = (summary: string, startTime: Date) => {
 			"dateTime": endTime.toISOString()
 		}
 	};
-	gCal.createEvent(TASK_CALENDAR_ID, event);
+	gCal.createEvent(getTaskCalendarId(), event);
 }
 
 let getCurrentWeekTimeRange = () => {
@@ -84,4 +85,12 @@ let getCurrentWeekTimeRange = () => {
 		timeMin: timeMin,
 		timeMax: timeMax
 	};
+}
+
+let getTaskCalendarId = () => {
+	if (Constants.DEBUG) {
+		return TEST_TASK_CALENDAR_ID;
+	} else {
+		return TASK_CALENDAR_ID;
+	}
 }
