@@ -112,8 +112,14 @@ let getListEventBelongsTo = (event, weekdayLists) => {
 		return null;
 	}
 
-	let eventStart: string = (event.start.date || event.start.dateTime);
-	let eventDay: number = moment(eventStart).tz("America/New_York").day();
+	let eventDay: number = null;
+	if (event.start.dateTime) {
+		eventDay = moment(event.start.dateTime).tz("America/New_York").day();
+	} else {
+		// all day events don't have a start time, defaulting to midnight UTC
+		// if we convert to local timezone, the day we get might be off
+		eventDay = moment(event.start.date).day();
+	}
 	let eventDayWords: string = DAYS_OF_WEEK[eventDay];
 	let list = weekdayLists[eventDayWords];
 	return list;
