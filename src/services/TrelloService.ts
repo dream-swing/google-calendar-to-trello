@@ -96,7 +96,7 @@ export let storeTokenToS3 = () => {
 }
 
 let getBoardId = () => {
-	if (process.env["useTestTrelloBoard"] == "true" || Constants.DEBUG) {
+	if (process.env["useTestTrelloBoard"] == "true") {
 		return TEST_BOARDID;
 	} else {
 		return WEEKLY_PLANNER_BOARDID;
