@@ -19,6 +19,20 @@ export let getListsAndCardsOnBoard = (boardId: string, params, callback) => {
 	getRequest(`/boards/${boardId}/lists`, params, callback);
 }
 
+export let updateList = (listId: string, newName: string, pos: string) => {
+	if (!(newName || pos)) {
+		throw new Error("Updating list with no new data.");
+	}
+	let data = {};
+	if (newName) {
+		data["name"] = newName;
+	}
+	if (pos) {
+		data["pos"] = pos;
+	}
+	putRequest(`${TRELLO_API_VER}/lists/${listId}`, data);
+}
+
 export let createCard = (listId: string, cardName: string, cardDesc: string) => {
 	let data = {
 		"idList": listId, // required
@@ -40,6 +54,13 @@ export let updateCard = (cardId: string, cardName: string, cardDesc: string) => 
 		"desc": encodeURIComponent(cardDesc),
 	};
 	putRequest(`${TRELLO_API_VER}/cards/${cardId}`, data);
+}
+
+export let updateCardPos = (cardId: string, pos: string) => {
+	let data = {
+		"value": pos
+	};
+	putRequest(`${TRELLO_API_VER}/cards/${cardId}/pos`, data);
 }
 
 export let storeToken = () => {

@@ -6,7 +6,7 @@ import * as process from "process";
 import * as Constants from "./../shared/Constants";
 import * as s3 from "./../services/AwsS3Service";
 
-const SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"];
+const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 const TOKEN_PATH:string = Constants.TOKEN_DIR + "google-auth.json";
 const CLIENT_SECRETS: string = "secrets/client_secret.json";
 const GOOGLE_AUTH_S3_KEY: string = "google-auth";

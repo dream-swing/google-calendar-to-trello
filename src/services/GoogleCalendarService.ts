@@ -1,6 +1,9 @@
 import * as gCal from "./../api/GoogleCalendarAPI";
 import * as moment from "moment-timezone";
 import * as s3 from "./AwsS3Service";
+import * as Constants from "./../shared/Constants";
+
+const TASK_CALENDAR_ID = "7gbqp1gdlr9vkg2l7j7kkfa71g@group.calendar.google.com";
 
 export let getWeeklyEvents = (callback) => {
 	let { timeMin, timeMax } = getCurrentWeekTimeRange();
@@ -39,8 +42,22 @@ export let validateEventIsComplete = (event): boolean => {
 	return eventComplete;
 }
 
+export let addEventToTask = (summary: string, startTime: Date) => {
+	let endTime: Date = moment(startTime).add("1", "h").toDate();
+	let event = {
+		"summary": summary,
+		"start": {
+			"dateTime": startTime.toISOString()
+		},
+		"end": {
+			"dateTime": endTime.toISOString()
+		}
+	};
+	gCal.createEvent(TASK_CALENDAR_ID, event);
+}
+
 let getCurrentWeekTimeRange = () => {
-	let today = moment().tz("America/New_York");
+	let today = moment().tz(Constants.TIMEZONE);
 	let dayOfWeek: number = today.day();
 
 	let timeMin: Date = today.toDate();

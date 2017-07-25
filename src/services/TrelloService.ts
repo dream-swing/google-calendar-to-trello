@@ -1,8 +1,11 @@
 import * as trelloAPI from "./../api/TrelloAPI";
 import * as process from "process";
+import * as Constants from "./../shared/Constants";
 
 const WEEKLY_PLANNER_BOARDID = "59387c00db4e82fa3c3825b3";
 const TEST_BOARDID = "595fcd34efd0be9149f39649";
+const DONE_SEPARATOR = "===^===^=DONE=^===^===";
+const RECURRING_LABEL = "Recurring";
 
 export let getWeekdayLists = (callback) => {
 	let params = {
@@ -11,10 +14,7 @@ export let getWeekdayLists = (callback) => {
 		"fields": "name"
 	};
 
-	let boardId = WEEKLY_PLANNER_BOARDID;
-	if (process.env["useTestTrelloBoard"] == "true") {
-		boardId = TEST_BOARDID;
-	}
+	let boardId = getBoardId();
 	
 	trelloAPI.getListsAndCardsOnBoard(boardId, params, (allTheLists) => {
 		let listsWeWant = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -28,6 +28,22 @@ export let getWeekdayLists = (callback) => {
 		}
 		callback(outputList);
 	});
+}
+
+export let renameList = (list, newName: string) => {
+	console.log(`Renaming list name from ${list.name} to ${newName}`);
+	trelloAPI.updateList(list.id, newName, null);
+}
+
+export let sortLists = (orderedLists: Array<any>) => {
+	console.log("Reordering lists...");
+	for (let i = 0; i < orderedLists.length; i++) {
+		let list = orderedLists[i];
+		// Trello API says position has to be positive number,
+		// not in the mood for testing if they consider 0 a positive number.
+		let pos: number = i + 1;
+		trelloAPI.updateList(list.id, null, pos + "");
+	}
 }
 
 export let createCard = (list, cardName: string, cardDesc: string) => {
@@ -59,6 +75,30 @@ export let updateCard = (card, newName: string, newDesc: string) => {
 	trelloAPI.updateCard(card.id, newName, newDesc);
 }
 
+export let moveCardToTop = (card) => {
+	console.log(`Moving card ${card.name} to top of list.`);
+	trelloAPI.updateCardPos(card.id, "top");
+}
+
+export let isDoneSeparatorCard = (card) => {
+	return card.name == DONE_SEPARATOR;
+}
+
+export let isRecurringCard = (card) => {
+	let labels = card.labels;
+	return labels.some((label, index, array) => {
+		label.name == RECURRING_LABEL;
+	});
+}
+
 export let storeTokenToS3 = () => {
 	trelloAPI.storeToken();
+}
+
+let getBoardId = () => {
+	if (process.env["useTestTrelloBoard"] == "true" || Constants.DEBUG) {
+		return TEST_BOARDID;
+	} else {
+		return WEEKLY_PLANNER_BOARDID;
+	}
 }

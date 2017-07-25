@@ -50,6 +50,23 @@ export let getUpdatedEvents = (callback) => {
 	});
 }
 
+export let createEvent = (calendarId, event) => {
+	googleAuth.processClientSecrets((auth) => {
+		let calendar = google.calendar("v3");
+		calendar.events.insert({
+			auth: auth,
+			calendarId: calendarId,
+			resource: event
+		}, (err, event) => {
+			if (err) {
+				throw new Error("Insert event failed. Google API returned error: " + err);
+			}
+
+			console.log(`Event created: ${event.summary}`);
+		});
+	});
+}
+
 let storeSyncToken = (syncToken: string) => {
 	if (!syncToken) {
 		throw new Error("No sync token returned from initial sync.");
@@ -57,6 +74,7 @@ let storeSyncToken = (syncToken: string) => {
 
 	s3.storeSyncToken(syncToken);
 }
+
 
 
 

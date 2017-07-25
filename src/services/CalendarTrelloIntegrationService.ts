@@ -1,8 +1,10 @@
 import * as gCal from "./GoogleCalendarService";
 import * as trello from "./TrelloService";
 import * as moment from "moment-timezone";
+import * as Constants from "./../shared/Constants";
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const EVENT_IDENTIFIER = "[event]";
 
 export let checkUpdatedEvents = () => {
 	gCal.getCurrentWeekUpdatedEvents((events) => {
@@ -44,6 +46,32 @@ export let populateTrelloWithWeeklyEvent = () => {
 			});
 		}
 	});
+}
+
+export let resetBoard = () => {
+	trello.getWeekdayLists((weekdayLists) => {
+		for (let weekday in weekdayLists) {
+			let list = weekdayLists[weekday];
+			let cards = list.cards;
+			for (let i: number = 0; i < cards.length; i++) {
+				let card = cards[i];
+				if (trello.isDoneSeparatorCard(card)) {
+					trello.moveCardToTop(card);
+				} else {
+					if (!isEventCard(card)) {
+						let startTime: Date = getStartTimeForCard(list, card, i);
+						gCal.addEventToTask(card.name, startTime);
+					}
+					if (!trello.isRecurringCard(card)) {
+						trello.deleteCard(card);
+					}
+				}
+			}
+			// update list name
+		}
+	});
+
+	// reorder lists
 }
 
 let createCard = (event, weekdayLists) => {
@@ -113,7 +141,7 @@ let getListEventBelongsTo = (event, weekdayLists) => {
 	}
 
 	let eventStart: string = (event.start.date || event.start.dateTime);
-	let eventDay: number = moment(eventStart).tz("America/New_York").day();
+	let eventDay: number = moment(eventStart).tz(Constants.TIMEZONE).day();
 	let eventDayWords: string = DAYS_OF_WEEK[eventDay];
 	let list = weekdayLists[eventDayWords];
 	return list;
@@ -126,8 +154,28 @@ let getCardNameFromEvent = (event): string => {
 
 	let startTime: string = "";
 	if (event.start.dateTime) {
-		startTime = moment(event.start.dateTime).tz("America/New_York").format("h:mma") + " ";
+		startTime = moment(event.start.dateTime).tz(Constants.TIMEZONE).format("h:mma") + " ";
 	}
-	let cardTitle = `${startTime}[event] ${event.summary}`;
+	let cardTitle = `${startTime}${EVENT_IDENTIFIER} ${event.summary}`;
 	return cardTitle;
 }
+
+let getStartTimeForCard = (list, card, index: number): Date => {
+	// TODO: do date time math
+	return new Date();
+}
+
+let isEventCard = (card): boolean => {
+	return card.name.includes(EVENT_IDENTIFIER);
+}
+
+
+
+
+
+
+
+
+
+
+
