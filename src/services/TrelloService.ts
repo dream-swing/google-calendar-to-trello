@@ -9,7 +9,7 @@ const RECURRING_LABEL = "Recurring";
 export let getWeekdayLists = (callback) => {
 	let params = {
 		"cards": "open",
-		"card_fields": "name,desc",
+		"card_fields": "name,desc,labels",
 		"fields": "name"
 	};
 
@@ -79,14 +79,19 @@ export let moveCardToTop = (card) => {
 	trelloAPI.updateCardPos(card.id, "top");
 }
 
-export let isDoneSeparatorCard = (card) => {
+export let isDoneSeparatorCard = (card): boolean => {
 	return card.name == DONE_SEPARATOR;
 }
 
-export let isRecurringCard = (card) => {
+export let isRecurringCard = (card): boolean => {
 	let labels = card.labels;
+
+	if (!labels) {
+		return false;
+	}
+
 	return labels.some((label, index, array) => {
-		label.name == RECURRING_LABEL;
+		return label.name == RECURRING_LABEL;
 	});
 }
 

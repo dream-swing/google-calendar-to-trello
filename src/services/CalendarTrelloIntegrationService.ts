@@ -57,22 +57,22 @@ export let resetBoard = () => {
 			for (let i: number = 0; i < cards.length; i++) {
 				let card = cards[i];
 				if (trello.isDoneSeparatorCard(card)) {
-					// trello.moveCardToTop(card);
+					trello.moveCardToTop(card);
 				} else {
 					if (!isEventCard(card)) {
 						let startTime: Date = getStartTimeForCard(list, card, i);
-						//gCal.addEventToTask(card.name, startTime);
+						gCal.addEventToTask(card.name, startTime);
 					}
-					// if (!trello.isRecurringCard(card)) {
-					// 	trello.deleteCard(card);
-					// }
+					if (!trello.isRecurringCard(card)) {
+						trello.deleteCard(card);
+					}
 				}
 			}
-			// update list name
+			// update list name with this week's dates
+			let newListName = getUpdatedListDate(list.name);
+			trello.renameList(list, newListName);
 		}
 	});
-
-	// reorder lists
 }
 
 let createCard = (event, weekdayLists) => {
@@ -168,28 +168,46 @@ let getCardNameFromEvent = (event): string => {
 }
 
 let getStartTimeForCard = (list, card, index: number): Date => {
-	let {month, day} = getMonthDayFromListName(list.name);
-	let thisYear: number = moment().year();
-	let year: number = thisYear;
-	// if we're in the new year (Jan) and we're logging December's events
-	// subtract one from current year
-	if (moment([thisYear, month, day]).isAfter(moment().add("1", "d"))) {
-		year = thisYear - 1;
-	}
+	let date = getDateFromListName(list.name);
 	let hour: number = DAY_START_HOUR + index;
-	let startTime = moment.tz([year, month, day, hour], Constants.TIMEZONE).toDate();
+	let startTime = moment.tz([date.year(), date.month(), date.date(), hour], Constants.TIMEZONE).toDate();
 	console.log(`Start time for ${card.name} constructed to be ${startTime}`);
 	return startTime;
 }
 
+/** 
+ * Not used
+ * Use regex to look for date portion of list name (e.g. "7/21")
+ */
 let getMonthDayFromListName = (listName: string) => {
 	let dateReg = /(\d{1,2})\/(\d{1,2})/g;
 	let regMatches = dateReg.exec(listName);
-	console.log("matches: " + regMatches);
 	return {
 		"month": parseInt(regMatches[1]) - 1, // month in code is 0 based
 		"day": parseInt(regMatches[2])
 	};
+}
+
+let getDateFromListName = (listName: string) => {
+	let parsedMoment = moment(listName, "dddd M/D");
+	let {month, day} = getMonthDayFromListName(listName);
+	let thisYear: number = moment().year();
+	let year: number = thisYear;
+	// if we're in the new year (Jan) and we're logging December's events
+	// subtract one from current year
+	if (parsedMoment.isAfter(moment().add("1", "d"))) {
+		let lastYear = parsedMoment.year() - 1;
+		parsedMoment.year(lastYear);
+	}
+
+	return parsedMoment;
+}
+
+let getUpdatedListDate = (listName: string) => {
+	let currentDate = getDateFromListName(listName);
+	let updatedDate = moment(currentDate).add("1", "w");
+	let updatedListName = updatedDate.format("dddd M/D");
+	return updatedListName;
 }
 
 let isEventCard = (card): boolean => {

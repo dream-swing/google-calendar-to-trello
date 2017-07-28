@@ -25,7 +25,7 @@ export let updateList = (listId: string, newName: string, pos: string) => {
 	}
 	let data = {};
 	if (newName) {
-		data["name"] = newName;
+		data["name"] = encodeURIComponent(newName);
 	}
 	if (pos) {
 		data["pos"] = pos;
