@@ -7,6 +7,7 @@ export let lambdaHandler = (lambdaEvent, lambdaContext, lambdaCallback) => {
 	try {
 		calendarTrelloIntegration.checkUpdatedEvents();
 	} catch (error) {
+		console.error("==ERROR== " + error);
 		lambdaCallback(error);
 	}
 }
