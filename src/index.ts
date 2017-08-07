@@ -1,5 +1,6 @@
 import * as calendarTrelloIntegration from "./services/CalendarTrelloIntegrationService";
 import * as googleAuth from "./api/GoogleAuthAPI";
+import * as s3Service from "./services/AwsS3Service";
 import * as process from "process";
 
 const HELP_TEXT = `
@@ -13,6 +14,7 @@ Here are commands you can give:
   'new-google-token': Initiate the process for generating a new Google auth 
     token.
   'test-function': Run content of testFunction.
+  'upload-zip': Upload executable zip to S3.
 `;
 
 let testFunction = () => {
@@ -36,6 +38,9 @@ switch (process.argv[2]) {
 		break;
 	case "test-function":
 		testFunction();
+		break;
+	case "upload-zip":
+		s3Service.uploadZip();
 		break;
 	case "-help":
 	case "-h":

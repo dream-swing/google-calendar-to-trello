@@ -1,10 +1,30 @@
 import * as aws from "aws-sdk";
+import * as fs from "fs";
 
 const BUCKET_NAME = "dream-swing-automation-scripts";
 const SYNC_TOKEN_NAME = "google-calendar-sync-token";
 
+const ZIP_FILENAME = "google-calendar-to-trello.zip";
+const ZIP_LOCAL_PATH = "out/" + ZIP_FILENAME;
+
 // credentials stored locally in ~/.aws/credentials
 let s3 = new aws.S3();
+
+export let uploadZip = () => {
+	let zipReadStream = fs.createReadStream(ZIP_LOCAL_PATH);
+	let uploadParams = {
+		Bucket: BUCKET_NAME,
+		Key: ZIP_FILENAME,
+		Body: zipReadStream
+	};
+	s3.upload(uploadParams, (err, data) => {
+		if (err) {
+			throw new Error(`Storing '${ZIP_FILENAME}' to S3 failed. ${err}`);
+		}
+
+		console.log(`Storing '${ZIP_FILENAME}' to S3 succeeded. ETag: ${data.ETag}. Location: ${data.Location}`);
+	});
+}
 
 export let storeSyncToken = (syncToken: string) => {
 	storeData(SYNC_TOKEN_NAME, syncToken, "text/plain", /*encrypt*/false);

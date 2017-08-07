@@ -7,7 +7,7 @@
     "start": "tsc && node build/index.js",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "output-zip": "tsc && scripts/s3_output.sh"
+    "output-zip": "tsc && scripts/s3_output.sh && node build/index.js upload-zip"
   },
   "repository": {
     "type": "git",
