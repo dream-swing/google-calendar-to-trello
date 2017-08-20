@@ -1,4 +1,4 @@
-import * as gCal from "./GoogleCalendarService";
+import { GoogleCalendarService } from "./GoogleCalendarService";
 import { TrelloService } from "./TrelloService";
 import * as moment from "moment-timezone";
 import * as Constants from "./../shared/Constants";
@@ -8,6 +8,7 @@ const EVENT_IDENTIFIER = "[event]";
 const DAY_START_HOUR = 10;
 
 let trello = new TrelloService(null);
+let gCal = new GoogleCalendarService(null);
 
 export let checkUpdatedEvents = () => {
 	gCal.getCurrentWeekUpdatedEvents((events) => {
