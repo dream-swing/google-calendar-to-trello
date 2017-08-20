@@ -1,5 +1,5 @@
 import * as calendarTrelloIntegration from "./services/CalendarTrelloIntegrationService";
-import * as googleAuth from "./api/GoogleAuthAPI";
+import { GoogleAuthAPI } from "./api/GoogleAuthAPI";
 import { AwsS3 } from "./storage/AwsS3";
 import * as process from "process";
 
@@ -23,6 +23,8 @@ let testFunction = () => {
 
 console.log("Input: " + process.argv[2]);
 
+let s3 = new AwsS3();
+
 switch (process.argv[2]) {
 	case "reset-board":
 		calendarTrelloIntegration.resetBoard();
@@ -34,13 +36,13 @@ switch (process.argv[2]) {
 		calendarTrelloIntegration.checkUpdatedEvents();
 		break;
 	case "new-google-token":
+		let googleAuth = new GoogleAuthAPI(s3);
 		googleAuth.promptForNewToken();
 		break;
 	case "test-function":
 		testFunction();
 		break;
 	case "upload-zip":
-		let s3 = new AwsS3();
 		s3.uploadZip();
 		break;
 	case "-help":
