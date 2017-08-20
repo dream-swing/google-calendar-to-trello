@@ -6,8 +6,9 @@
   "scripts": {
     "start": "tsc && node build/index.js",
     "build": "tsc",
-    "test": "tsc && mocha ./build/**/*.spec.js",
-    "output-zip": "tsc && scripts/s3_output.sh && node build/index.js upload-zip"
+    "test": "tsc && mocha \"./build/**/*.spec.js\"",
+    "output-zip": "tsc && scripts/s3_output.sh && node build/index.js upload-zip",
+    "clean": "rm -r ./build"
   },
   "repository": {
     "type": "git",
