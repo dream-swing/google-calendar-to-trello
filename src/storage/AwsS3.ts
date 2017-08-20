@@ -2,8 +2,9 @@ import { S3 } from "aws-sdk";
 import * as fs from "fs";
 
 import { AuthStorage } from "./AuthStorage";
+import { TokenStorage } from "./TokenStorage";
 
-export class AwsS3 implements AuthStorage {
+export class AwsS3 implements AuthStorage, TokenStorage {
 	private static readonly BUCKET_NAME = "dream-swing-automation-scripts";
 	private static readonly SYNC_TOKEN_NAME = "google-calendar-sync-token";
 
@@ -37,7 +38,7 @@ export class AwsS3 implements AuthStorage {
 		this.storeData(AwsS3.SYNC_TOKEN_NAME, syncToken, "text/plain", /*encrypt*/false);
 	}
 
-	public getSyncToken(callback) {
+	public getSyncToken(callback: ((string) => void)) {
 		this.getData(AwsS3.SYNC_TOKEN_NAME, (dataBody) => {
 			let token = dataBody.toString();
 			console.log("token from storage: " + token);

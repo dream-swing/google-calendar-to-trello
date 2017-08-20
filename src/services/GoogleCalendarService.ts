@@ -1,9 +1,15 @@
-import * as gCal from "./../api/GoogleCalendarAPI";
 import * as moment from "moment-timezone";
 import * as Constants from "./../shared/Constants";
 
+import { GoogleCalendarAPI } from "./../api/GoogleCalendarAPI";
+import { GoogleAuthAPI } from "./../api/GoogleAuthAPI";
+import { AwsS3 } from "./../storage/AwsS3";
+
 const TASK_CALENDAR_ID = "7gbqp1gdlr9vkg2l7j7kkfa71g@group.calendar.google.com";
 const TEST_TASK_CALENDAR_ID = "gc1bpqfc1i5rvaeef0l913b8bk@group.calendar.google.com";
+
+let s3 = new AwsS3();
+let gCal = new GoogleCalendarAPI(new GoogleAuthAPI(s3), s3);
 
 export let getWeeklyEvents = (callback) => {
 	let { timeMin, timeMax } = getCurrentWeekTimeRange();

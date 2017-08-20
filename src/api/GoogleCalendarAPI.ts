@@ -1,81 +1,83 @@
 import * as google from "googleapis";
 import { GoogleAuthAPI } from "./GoogleAuthAPI";
-import { AwsS3 } from "./../storage/AwsS3";
+import { TokenStorage } from "./../storage/TokenStorage";
 
-let s3 = new AwsS3();
-let googleAuth = new GoogleAuthAPI(s3);
+export class GoogleCalendarAPI {
 
-/**
- * Lists single events in the time range specified. Time range params are specified
- * in ISO format as strings.
- */
-export let listSingleEventsInRange = (timeMinISO: string, timeMaxISO: string, callback) => {
-	googleAuth.processClientSecrets((auth) => {
-		let calendar = google.calendar("v3");
-		calendar.events.list({
-			auth: auth,
-			calendarId: "primary",
-			timeMin: timeMinISO,
-			timeMax: timeMaxISO,
-			singleEvents: true,
-		}, (err, response) => {
-			if (err) {
-				throw new Error("The API returned an error: " + err);
-			}
+	constructor(private _googleAuth: GoogleAuthAPI, private _tokenStore: TokenStorage) {}
 
-			storeSyncToken(response.nextSyncToken);
-			callback(response.items);
-		});
-	});
-};
-
-export let getUpdatedEvents = (callback) => {
-	s3.getSyncToken((syncToken) => {
-		if (!syncToken) {
-			throw new Error("No sync token for updating event.");
-		}
-		
-		googleAuth.processClientSecrets((auth) => {
+	/**
+	 * Lists single events in the time range specified. Time range params are specified
+	 * in ISO format as strings.
+	 */
+	public listSingleEventsInRange(timeMinISO: string, timeMaxISO: string, callback) {
+		this._googleAuth.processClientSecrets((auth) => {
 			let calendar = google.calendar("v3");
 			calendar.events.list({
 				auth: auth,
 				calendarId: "primary",
-				syncToken: syncToken
+				timeMin: timeMinISO,
+				timeMax: timeMaxISO,
+				singleEvents: true,
 			}, (err, response) => {
 				if (err) {
-					throw new Error("Google API returned error: " + err);
+					throw new Error("The API returned an error: " + err);
 				}
 
-				storeSyncToken(response.nextSyncToken);
+				this.storeSyncToken(response.nextSyncToken);
 				callback(response.items);
 			});
 		});
-	});
-}
+	};
 
-export let createEvent = (calendarId, event) => {
-	googleAuth.processClientSecrets((auth) => {
-		let calendar = google.calendar("v3");
-		calendar.events.insert({
-			auth: auth,
-			calendarId: calendarId,
-			resource: event
-		}, (err, event) => {
-			if (err) {
-				throw new Error("Insert event failed. Google API returned error: " + err);
+	public getUpdatedEvents(callback) {
+		this._tokenStore.getSyncToken((syncToken) => {
+			if (!syncToken) {
+				throw new Error("No sync token for updating event.");
 			}
+			
+			this._googleAuth.processClientSecrets((auth) => {
+				let calendar = google.calendar("v3");
+				calendar.events.list({
+					auth: auth,
+					calendarId: "primary",
+					syncToken: syncToken
+				}, (err, response) => {
+					if (err) {
+						throw new Error("Google API returned error: " + err);
+					}
 
-			console.log(`Event created: ${event.summary}`);
+					this.storeSyncToken(response.nextSyncToken);
+					callback(response.items);
+				});
+			});
 		});
-	});
-}
-
-let storeSyncToken = (syncToken: string) => {
-	if (!syncToken) {
-		throw new Error("No sync token returned from initial sync.");
 	}
 
-	s3.storeSyncToken(syncToken);
+	public createEvent(calendarId, event) {
+		this._googleAuth.processClientSecrets((auth) => {
+			let calendar = google.calendar("v3");
+			calendar.events.insert({
+				auth: auth,
+				calendarId: calendarId,
+				resource: event
+			}, (err, event) => {
+				if (err) {
+					throw new Error("Insert event failed. Google API returned error: " + err);
+				}
+
+				console.log(`Event created: ${event.summary}`);
+			});
+		});
+	}
+
+	private storeSyncToken(syncToken: string) {
+		if (!syncToken) {
+			throw new Error("No sync token returned from initial sync.");
+		}
+
+		this._tokenStore.storeSyncToken(syncToken);
+	}
 }
 
 
