@@ -1,6 +1,6 @@
 import * as calendarTrelloIntegration from "./services/CalendarTrelloIntegrationService";
 import * as googleAuth from "./api/GoogleAuthAPI";
-import * as s3Service from "./services/AwsS3Service";
+import { AwsS3 } from "./storage/AwsS3";
 import * as process from "process";
 
 const HELP_TEXT = `
@@ -40,7 +40,8 @@ switch (process.argv[2]) {
 		testFunction();
 		break;
 	case "upload-zip":
-		s3Service.uploadZip();
+		let s3 = new AwsS3();
+		s3.uploadZip();
 		break;
 	case "-help":
 	case "-h":

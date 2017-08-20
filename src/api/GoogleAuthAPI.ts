@@ -4,13 +4,15 @@ import * as googleAuth from "google-auth-library";
 import * as process from "process";
 
 import * as Constants from "./../shared/Constants";
-import * as s3 from "./../services/AwsS3Service";
+import { AwsS3 } from "./../storage/AwsS3";
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 const TOKEN_PATH:string = Constants.TOKEN_DIR + "google-auth.json";
 const CLIENT_SECRETS: string = "secrets/client_secret.json";
 const GOOGLE_AUTH_S3_KEY: string = "google-auth";
 const GOOGLE_CLIENT_SECRET_S3_KEY: string = "google-client-secret";
+
+let s3 = new AwsS3();
 
 export let processClientSecrets = (callback) => {
 	s3.getEncryptedAuth(GOOGLE_CLIENT_SECRET_S3_KEY, (clientSecret) => {

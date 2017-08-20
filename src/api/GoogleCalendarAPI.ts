@@ -1,6 +1,8 @@
 import * as google from "googleapis";
 import * as googleAuth from "./GoogleAuthAPI";
-import * as s3 from "./../services/AwsS3Service";
+import { AwsS3 } from "./../storage/AwsS3";
+
+let s3 = new AwsS3();
 
 /**
  * Lists single events in the time range specified. Time range params are specified

@@ -1,12 +1,14 @@
-import { TrelloAPI } from "./../api/TrelloAPI";
 import * as Constants from "./../shared/Constants";
+
+import { TrelloAPI } from "./../api/TrelloAPI";
+import { AwsS3 } from "./../storage/AwsS3";
 
 const WEEKLY_PLANNER_BOARDID = "59387c00db4e82fa3c3825b3";
 const TEST_BOARDID = "595fcd34efd0be9149f39649";
 const DONE_SEPARATOR = "===^===^=DONE=^===^===";
 const RECURRING_LABEL = "Recurring";
 
-let trelloAPI = new TrelloAPI(null);
+let trelloAPI = new TrelloAPI(new AwsS3());
 
 export let getWeekdayLists = (callback) => {
 	let params = {
