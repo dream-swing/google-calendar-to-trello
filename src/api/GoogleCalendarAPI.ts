@@ -1,10 +1,16 @@
 import * as google from "googleapis";
 import { GoogleAuthAPI } from "./GoogleAuthAPI";
 import { TokenStorage } from "./../storage/TokenStorage";
+import { AuthStorage } from "./../storage/AuthStorage";
 
 export class GoogleCalendarAPI {
 
 	constructor(private _googleAuth: GoogleAuthAPI, private _tokenStore: TokenStorage) {}
+
+	static createAPI(tokenStore: TokenStorage, authStore: AuthStorage) {
+		let googleAuth = new GoogleAuthAPI(authStore);
+		return new GoogleCalendarAPI(googleAuth, tokenStore);
+	}
 
 	/**
 	 * Lists single events in the time range specified. Time range params are specified
