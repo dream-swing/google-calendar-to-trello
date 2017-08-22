@@ -115,14 +115,10 @@ describe("Trello API", function() {
 
 				this.trelloAPI.updateList(listId, test.newName, test.newPos);
 
-				let expectedOption = {
-					hostname: TRELLO_HOST,
-					path: `${TRELLO_API_VER}/lists/${listId}?${test.expectedQuery}`,
-					method: "PUT",
-					headers: {
-						"Content-Length": 0
-					}
-				};
+				let expectedOption = createRequestOption(
+					`${TRELLO_API_VER}/lists/${listId}?${test.expectedQuery}`,
+					"PUT"
+				);
 				expect(this.stubbedHttpsRequest.calledWith(expectedOption)).to.be.true;
 			});
 		});
@@ -143,7 +139,78 @@ describe("Trello API", function() {
 	});
 
 	describe("#createCard()", function() {
+		let listId = "23456";
+		let cardName = "card name goes here";
+		let encodedCardName = encodeURIComponent(cardName);
+		let cardDesc = "some description <that seems relevant>! @someone-awesome";
+		let encodedCardDesc = encodeURIComponent(cardDesc);
 
+		let tests = [
+			{
+				description: "should send all data through query param",
+				cardName: cardName,
+				cardDesc: cardDesc,
+				expectedQuery: `idList=${listId}&name=${encodedCardName}&desc=${encodedCardDesc}`
+			},
+			{
+				description: "should still create card if cardName is null",
+				cardName: null,
+				cardDesc: cardDesc,
+				expectedQuery: `idList=${listId}&desc=${encodedCardDesc}`
+			},
+			{
+				description: "should still create card if cardName is empty string",
+				cardName: "",
+				cardDesc: cardDesc,
+				expectedQuery: `idList=${listId}&desc=${encodedCardDesc}`
+			},
+			{
+				description: "should still create card if cardDesc is null",
+				cardName: cardName,
+				cardDesc: null,
+				expectedQuery: `idList=${listId}&name=${encodedCardName}`
+			},
+			{
+				description: "should still create card if cardDesc is empty string",
+				cardName: cardName,
+				cardDesc: "",
+				expectedQuery: `idList=${listId}&name=${encodedCardName}`
+			},
+			{
+				description: "should still create card if both cardName and cardDesc are null",
+				cardName: null,
+				cardDesc: null,
+				expectedQuery: `idList=${listId}`
+			}
+		];
+
+		tests.forEach(function(test) {
+			it(test.description, function() {
+				stubHttpsSimpleResponse(this.stubbedHttpsRequest);
+
+				this.trelloAPI.createCard(listId, test.cardName, test.cardDesc);
+
+				let expectedOptions = createRequestOption(
+					`${TRELLO_API_VER}/cards?${test.expectedQuery}`,
+					"POST"
+				);
+				expect(this.stubbedHttpsRequest.calledWith(expectedOptions)).to.be.true;
+			});
+		});
+
+		it("should throw if listId is empty string", function() {
+			let testFunc = () => {
+				this.trelloAPI.createCard("", cardName, cardDesc);
+			};
+			expect(testFunc).to.throw("list id required");
+		});
+
+		it("should throw if listId is null", function() {
+			let testFunc = () => {
+				this.trelloAPI.createCard(null, cardName, cardDesc);
+			};
+			expect(testFunc).to.throw("list id required");
+		});
 	});
 
 	describe("#deleteCard()", function() {
@@ -162,6 +229,21 @@ describe("Trello API", function() {
 
 	});
 });
+
+let createRequestOption = (path: string, method: string, headerContentLength?: number) => {
+	if (!headerContentLength) {
+		headerContentLength = 0;
+	}
+
+	return {
+		hostname: TRELLO_HOST,
+		path: path,
+		method: method,
+		headers: {
+			"Content-Length": headerContentLength
+		}
+	};
+}
 
 let stubHttpsSimpleResponse = (stubFunc: sinon.SinonStub) => {
 	stubHttpsResponse(stubFunc, 200);

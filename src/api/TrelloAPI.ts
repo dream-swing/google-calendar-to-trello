@@ -38,11 +38,21 @@ export class TrelloAPI {
 	}
 
 	public createCard(listId: string, cardName: string, cardDesc: string) {
+		if (!listId) {
+			throw new Error("list id required for creating card.");
+		}
+
 		let data = {
 			"idList": listId, // required
-			"name": encodeURIComponent(cardName),
-			"desc": encodeURIComponent(cardDesc),
 		};
+
+		if (cardName) {
+			data["name"] = encodeURIComponent(cardName);
+		}
+
+		if (cardDesc) {
+			data["desc"] = encodeURIComponent(cardDesc);
+		}
 		// apparently parameters have to be submitted through query string
 		// instead of request body
 		this.postRequest(`${TrelloAPI.TRELLO_API_VER}/cards`, data, null, null);
@@ -120,6 +130,7 @@ export class TrelloAPI {
 					"Content-Length": Buffer.byteLength(postDataString)
 				}
 			};
+			//console.log("Actual options: "  + JSON.stringify(options));
 			const request = https.request(options, (response) => {
 				const { statusCode } = response;
 
