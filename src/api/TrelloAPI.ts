@@ -101,17 +101,17 @@ export class TrelloAPI {
 	}
 
 	private deleteRequest(path: string, queryParams: any) {
-		this.sendRequest("DELETE", path, queryParams, null, null);
+		this.sendRequest("DELETE", path, queryParams);
 	}
 
 	private putRequest(path: string, queryParams: any) {
-		this.sendRequest("PUT", path, queryParams, null, null);
+		this.sendRequest("PUT", path, queryParams);
 	}
 
-	private sendRequest(method: string, path: string, queryParams: any, data: any, callback) {
+	private sendRequest(method: string, path: string, queryParams: any, data?: any, callback?) {
 		this.getTokenToRun((token) => {
 			let queryString = Util.constructQueryString(Object.assign({}, token, queryParams));
-			let postDataString = JSON.stringify(data);
+			let postDataString = (data) ? JSON.stringify(data) : "";
 			const options = {
 				hostname: TrelloAPI.TRELLO_HOST,
 				path: path + queryString,
@@ -143,7 +143,6 @@ export class TrelloAPI {
 			request.on("error", (err) => {
 				throw new Error(`Request error. ${err}`);
 			});
-
 			request.write(postDataString);
 			request.end();
 		});

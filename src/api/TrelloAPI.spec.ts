@@ -1,7 +1,6 @@
 import "mocha";
 import * as chai from "chai";
 import * as sinon from "sinon";
-
 import * as https from "https";
 import { PassThrough } from "stream";
 
@@ -10,13 +9,14 @@ import { FakeAuthStorage } from "./../storage/AuthStorage";
 
 let expect = chai.expect;
 
+const TRELLO_HOST: string = "api.trello.com";
+const TRELLO_API_VER: string = "/1";
+
 describe("Trello API", function() {
 	beforeEach(function() {
-		// set up a TrelloAPI object using a mock AuthStorage class
 		let fakeAuthStore = new FakeAuthStorage();
 		this.trelloAPI = new TrelloAPI(fakeAuthStore);
 
-		// https.get and https.request needs to be stubbed
 		this.stubbedHttpsGet = sinon.stub(https, "get");
 		this.stubbedHttpsRequest = sinon.stub(https, "request");
 	});
@@ -32,14 +32,8 @@ describe("Trello API", function() {
 				{ "name": "board1", "id": "123" },
 				{ "name": "board2", "id": "234"}
 			];
-			let response = new PassThrough();
-			response['statusCode'] = 200;
-			response.write(JSON.stringify(expectedData));
-			response.end();
+			stubHttpsResponse(this.stubbedHttpsGet, 200, expectedData);
 
-			let request = new PassThrough();
-
-			this.stubbedHttpsGet.yields(response).returns(request);
 			this.trelloAPI.getBoards((data) => {
 				expect(data).to.eql(expectedData);
 				done();
@@ -49,38 +43,16 @@ describe("Trello API", function() {
 
 	describe("#getListsAndCardsOnBoard()", function() {
 		it("should throw if boardId is invalid", function() {
-			// 400 response "invalid id"
-			/* Response header:
-				date: Sun, 20 Aug 2017 02:46:35 GMT
-				x-content-type-options: nosniff
-				x-trello-version: 1.1024.0
-				vary: Accept-Encoding
-				content-length: 10
-				x-xss-protection: 1; mode=block
-				cache-control: max-age=0, must-revalidate, no-cache, no-store
-				etag: W/"a-84da4bba"
-				x-frame-options: DENY
-				access-control-allow-methods: GET, PUT, POST, DELETE
-				content-type: text/plain; charset=utf-8
-				access-control-allow-origin: *
-				x-trello-environment: Production
-				access-control-allow-headers: Authorization, Accept, Content-Type
-				expires: Thu, 01 Jan 1970 00:00:00
-			*/
+			// Trello response: 400, "invalid id"
 			let callback = sinon.spy();
 			let testFunc = () => {
 				this.trelloAPI.getListsAndCardsOnBoard("12345", {}, callback);
 			}
 
-			let response = new PassThrough();
-			response['statusCode'] = 400;
-			response.write("Invalid id");
-			response.end();
+			stubHttpsResponse(this.stubbedHttpsGet, 400, "invalid id");
 
-			let request = new PassThrough();
-
-			this.stubbedHttpsGet.yields(response).returns(request);
-
+			// TODO: This test might have synchronization issues where callback
+			// could be called but test still passes
 			expect(testFunc).to.throw("request failed");
 			expect(callback.called).to.be.false;
 		});
@@ -90,14 +62,9 @@ describe("Trello API", function() {
 				{ "name": "list1" },
 				{ "name": "list2" }
 			];
-			let response = new PassThrough();
-			response['statusCode'] = 200;
-			response.write(JSON.stringify(expectedData));
-			response.end();
 
-			let request = new PassThrough();
+			stubHttpsResponse(this.stubbedHttpsGet, 200, expectedData);
 
-			this.stubbedHttpsGet.yields(response).returns(request);
 			this.trelloAPI.getListsAndCardsOnBoard("12345", {}, (data) => {
 				expect(data, "Data passed to callback should be same as https call result").to.eql(expectedData);
 				done();
@@ -106,7 +73,73 @@ describe("Trello API", function() {
 	});
 
 	describe("#updateList()", function() {
+		let listId = "54321";
+		let newName = "new name";
+		let encodedNewName = encodeURIComponent(newName);
+		let tests = [
+			{
+				description: "should include all data in URL",
+				newName: newName,
+				newPos: "23",
+				expectedQuery: `name=${encodedNewName}&pos=23`
+			},
+			{
+				description: "should only send name if newPos is empty string",
+				newName: newName,
+				newPos: "",
+				expectedQuery: `name=${encodedNewName}`
+			},
+			{
+				description: "should only send name if newPos is null",
+				newName: newName,
+				newPos: null,
+				expectedQuery: `name=${encodedNewName}`
+			},
+			{
+				description: "should only send pos if newName is empty string",
+				newName: "",
+				newPos: "23",
+				expectedQuery: `pos=23`
+			},
+			{
+				description: "should only send pos if newName is null",
+				newName: null,
+				newPos: "23",
+				expectedQuery: `pos=23`
+			}
+		];
 
+		tests.forEach(function(test) {
+			it(test.description, function() {
+				stubHttpsSimpleResponse(this.stubbedHttpsRequest);
+
+				this.trelloAPI.updateList(listId, test.newName, test.newPos);
+
+				let expectedOption = {
+					hostname: TRELLO_HOST,
+					path: `${TRELLO_API_VER}/lists/${listId}?${test.expectedQuery}`,
+					method: "PUT",
+					headers: {
+						"Content-Length": 0
+					}
+				};
+				expect(this.stubbedHttpsRequest.calledWith(expectedOption)).to.be.true;
+			});
+		});
+
+		it("should throw if both new name and pos are null", function() {
+			let testFunc = () => {
+				this.trelloAPI.updateList(listId, null, null);
+			};
+			expect(testFunc).to.throw("no new data");
+		});
+
+		it("should throw if both new name and pos are empty string", function() {
+			let testFunc = () => {
+				this.trelloAPI.updateList(listId, "", "");
+			};
+			expect(testFunc).to.throw("no new data");
+		});
 	});
 
 	describe("#createCard()", function() {
@@ -129,3 +162,29 @@ describe("Trello API", function() {
 
 	});
 });
+
+let stubHttpsSimpleResponse = (stubFunc: sinon.SinonStub) => {
+	stubHttpsResponse(stubFunc, 200);
+}
+
+let stubHttpsResponse = (stubFunc: sinon.SinonStub, statusCode: number, body?: any) => {
+	let response = createResponse(statusCode, body);
+	let request = new PassThrough();
+	stubFunc.yields(response).returns(request);
+}
+
+let createSimpleResponse = () => {
+	return createResponse(200);
+}
+
+let createResponse = (statusCode: number, body?: any) => {
+	let response = new PassThrough();
+	response['statusCode'] = statusCode;
+
+	if (body) {
+		response.write(JSON.stringify(body));
+		response.end();
+	}
+	
+	return response;
+}
