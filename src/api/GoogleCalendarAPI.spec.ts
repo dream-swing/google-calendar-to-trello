@@ -11,7 +11,7 @@ import { FakeAuthStorage } from "./../storage/AuthStorage";
 
 let expect = chai.expect;
 
-describe.only("Google Calendar API", function() {
+describe("Google Calendar API", function() {
 	before(function() {
 		let googleAuth = new GoogleAuthAPI(new FakeAuthStorage());
 		let stubbedprocessSecret = sinon.stub(googleAuth, "processClientSecrets");
