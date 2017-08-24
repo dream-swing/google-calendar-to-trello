@@ -39,6 +39,8 @@ describe("Trello API", function() {
 				done();
 			});
 		});
+
+		it("should throw when API returns fail?");
 	});
 
 	describe("#getListsAndCardsOnBoard()", function() {
@@ -136,6 +138,8 @@ describe("Trello API", function() {
 			};
 			expect(testFunc).to.throw("no new data");
 		});
+
+		it("should possibly throw if API call returns fail?");
 	});
 
 	describe("#createCard()", function() {
@@ -211,6 +215,8 @@ describe("Trello API", function() {
 			};
 			expect(testFunc).to.throw("list id required");
 		});
+
+		it("should throw if API returns fail?");
 	});
 
 	describe("#deleteCard()", function() {
@@ -300,10 +306,64 @@ describe("Trello API", function() {
 
 			expect(testFunc).to.throw("card id required");
 		});
+
+		it("should throw if API returns fail?");
 	});
 
 	describe("#updateCardPos()", function() {
+		let cardId = "asdfb123";
+		let pos = "104.2";
+		let encodedPos = encodeURIComponent(pos);
 
+		let tests = [
+			{
+				description: "should send numbered pos as encoded value",
+				pos: pos,
+				expectedQuery: `value=${encodedPos}`
+			},
+			{
+				description: "should send descriptive pos as is (e.g. top)",
+				pos: "top",
+				expectedQuery: `value=top`
+			}
+		];
+
+		tests.forEach(function(test) {
+			it(test.description, function() {
+				stubHttpsSimpleResponse(this.stubbedHttpsRequest);
+
+				this.trelloAPI.updateCardPos(cardId, test.pos);
+
+				let expectedOptions = createRequestOption(
+					`${TRELLO_API_VER}/cards/${cardId}/pos?${test.expectedQuery}`,
+					"PUT"
+				);
+				expect(this.stubbedHttpsRequest.calledWith(expectedOptions)).to.be.true;
+			});
+		});
+
+		let throwTests = [
+			{
+				description: "should throw if cardId is null",
+				cardId: null,
+				errorMsg: "card id required"
+			},
+			{
+				description: "should throw if cardId is empty string",
+				cardId: "",
+				errorMsg: "card id required"
+			}
+		];
+
+		throwTests.forEach(function(test) {
+			it(test.description, function() {
+				let testFunc = () => {
+					this.trelloAPI.updateCardPos(test.cardId, pos);
+				};
+
+				expect(testFunc).to.throw(test.errorMsg);
+			});
+		});
 	});
 
 	describe("#storeToken()", function() {

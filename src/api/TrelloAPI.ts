@@ -83,14 +83,19 @@ export class TrelloAPI {
 		if (cardDesc !== null) {
 			data["desc"] = encodeURIComponent(cardDesc);
 		}
-		
+
 		this.putRequest(`${TrelloAPI.TRELLO_API_VER}/cards/${cardId}`, data);
 	}
 
 	public updateCardPos(cardId: string, pos: string) {
+		if (!cardId) {
+			throw new Error("card id required for updating card.");
+		}
+
 		let data = {
 			"value": pos
 		};
+		
 		this.putRequest(`${TrelloAPI.TRELLO_API_VER}/cards/${cardId}/pos`, data);
 	}
 
