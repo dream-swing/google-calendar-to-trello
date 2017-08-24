@@ -5,11 +5,12 @@ import { AuthStorage } from "./../storage/AuthStorage";
 
 export class GoogleCalendarAPI {
 
-	constructor(private _googleAuth: GoogleAuthAPI, private _tokenStore: TokenStorage) {}
+	constructor(private _googleAuth: GoogleAuthAPI, private _tokenStore: TokenStorage, private _calAPIHelper) {}
 
 	static createAPI(tokenStore: TokenStorage, authStore: AuthStorage) {
 		let googleAuth = new GoogleAuthAPI(authStore);
-		return new GoogleCalendarAPI(googleAuth, tokenStore);
+		let calendar = google.calendar("v3");
+		return new GoogleCalendarAPI(googleAuth, tokenStore, calendar);
 	}
 
 	/**
@@ -18,8 +19,7 @@ export class GoogleCalendarAPI {
 	 */
 	public listSingleEventsInRange(timeMinISO: string, timeMaxISO: string, callback) {
 		this._googleAuth.processClientSecrets((auth) => {
-			let calendar = google.calendar("v3");
-			calendar.events.list({
+			this._calAPIHelper.events.list({
 				auth: auth,
 				calendarId: "primary",
 				timeMin: timeMinISO,
@@ -27,7 +27,7 @@ export class GoogleCalendarAPI {
 				singleEvents: true,
 			}, (err, response) => {
 				if (err) {
-					throw new Error("The API returned an error: " + err);
+					throw new Error("Google API returned an error: " + err);
 				}
 
 				this.storeSyncToken(response.nextSyncToken);
@@ -43,14 +43,13 @@ export class GoogleCalendarAPI {
 			}
 			
 			this._googleAuth.processClientSecrets((auth) => {
-				let calendar = google.calendar("v3");
-				calendar.events.list({
+				this._calAPIHelper.events.list({
 					auth: auth,
 					calendarId: "primary",
 					syncToken: syncToken
 				}, (err, response) => {
 					if (err) {
-						throw new Error("Google API returned error: " + err);
+						throw new Error("Google API returned an error: " + err);
 					}
 
 					this.storeSyncToken(response.nextSyncToken);
@@ -61,15 +60,21 @@ export class GoogleCalendarAPI {
 	}
 
 	public createEvent(calendarId, event) {
+		if (!calendarId) {
+			throw new Error("calendarId required for creating an event");
+		}
+		if (!event) {
+			throw new Error("event required for creating event");
+		}
+		
 		this._googleAuth.processClientSecrets((auth) => {
-			let calendar = google.calendar("v3");
-			calendar.events.insert({
+			this._calAPIHelper.events.insert({
 				auth: auth,
 				calendarId: calendarId,
 				resource: event
 			}, (err, event) => {
 				if (err) {
-					throw new Error("Insert event failed. Google API returned error: " + err);
+					throw new Error("Insert event failed. Google API returned an error: " + err);
 				}
 
 				console.log(`Event created: ${event.summary}`);

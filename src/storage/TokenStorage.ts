@@ -8,6 +8,6 @@ export class FakeTokenStorage implements TokenStorage {
 	}
 
 	public getSyncToken(callback: ((string) => void)) {
-		callback("");
+		callback("faketoken");
 	}
 }

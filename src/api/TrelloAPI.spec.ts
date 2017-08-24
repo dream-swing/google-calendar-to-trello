@@ -13,10 +13,12 @@ const TRELLO_HOST: string = "api.trello.com";
 const TRELLO_API_VER: string = "/1";
 
 describe("Trello API", function() {
-	beforeEach(function() {
+	before(function() {
 		let fakeAuthStore = new FakeAuthStorage();
 		this.trelloAPI = new TrelloAPI(fakeAuthStore);
+	});
 
+	beforeEach(function() {
 		this.stubbedHttpsGet = sinon.stub(https, "get");
 		this.stubbedHttpsRequest = sinon.stub(https, "request");
 	});
