@@ -214,11 +214,92 @@ describe("Trello API", function() {
 	});
 
 	describe("#deleteCard()", function() {
+		it("should throw if cardId is empty string", function() {
+			let testFunc = () => {
+				this.trelloAPI.deleteCard("");
+			}
+			expect(testFunc).to.throw("card id required");
+		});
 
+		it("should throw if cardId is null", function() {
+			let testFunc = () => {
+				this.trelloAPI.deleteCard(null);
+			}
+			expect(testFunc).to.throw("card id required");
+		});
+
+		it("should maybe throw if cardId is invalid and API returns fail?");
 	});
 
 	describe("#updateCard()", function() {
+		let cardId = "abcd1234";
+		let cardName = "new name 4 card";
+		let encodedCardName = encodeURIComponent(cardName);
+		let cardDesc = "fancy new description!!@@";
+		let encodedCardDesc = encodeURIComponent(cardDesc);
 
+		let tests = [
+			{
+				description: "should send all data through query param",
+				cardName: cardName,
+				cardDesc: cardDesc,
+				expectedQuery: `name=${encodedCardName}&desc=${encodedCardDesc}`
+			},
+			{
+				description: "should not update description if description is null",
+				cardName: cardName,
+				cardDesc: null,
+				expectedQuery: `name=${encodedCardName}`
+			},
+			{
+				description: "should update description if cardDesc is empty string",
+				cardName: cardName,
+				cardDesc: "",
+				expectedQuery: `name=${encodedCardName}&desc=`
+			},
+			{
+				description: "should not update name if name is null",
+				cardName: null,
+				cardDesc: cardDesc,
+				expectedQuery: `desc=${encodedCardDesc}`
+			},
+			{
+				description: "should update name if cardName is empty string",
+				cardName: "",
+				cardDesc: cardDesc,
+				expectedQuery: `name=&desc=${encodedCardDesc}`
+			}
+		];
+
+		tests.forEach(function(test) {
+			it(test.description, function() {
+				stubHttpsSimpleResponse(this.stubbedHttpsRequest);
+
+				this.trelloAPI.updateCard(cardId, test.cardName, test.cardDesc);
+
+				let expectedOptions = createRequestOption(
+					`${TRELLO_API_VER}/cards/${cardId}?${test.expectedQuery}`,
+					"PUT"
+				);
+				expect(this.stubbedHttpsRequest.calledWith(expectedOptions)).to.be.true;
+			});
+		});
+
+		it("should throw if cardId is null", function() {
+			let testFunc = () => {
+				this.trelloAPI.updateCard(null, cardName, cardDesc);
+			};
+
+			expect(testFunc).to.throw("card id required");
+		});
+
+		it("should throw if cardId is empty string", function() {
+			let testFunc = () => {
+				this.trelloAPI.updateCard("", cardName, cardDesc);
+			};
+
+			expect(testFunc).to.throw("card id required");
+		});
 	});
 
 	describe("#updateCardPos()", function() {
