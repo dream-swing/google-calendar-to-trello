@@ -1,5 +1,8 @@
-import * as calendarTrelloIntegration from "./services/CalendarTrelloIntegrationService";
-import * as googleAuth from "./api/GoogleAuthAPI";
+import { GoogleAuthAPI } from "./api/GoogleAuthAPI";
+import { CalendarTrelloIntegrationService } from "./services/CalendarTrelloIntegrationService";
+import { GoogleCalendarAPI } from "./api/GoogleCalendarAPI";
+import { TrelloAPI } from "./api/TrelloAPI";
+import { AwsS3 } from "./storage/AwsS3";
 import * as process from "process";
 
 const HELP_TEXT = `
@@ -13,6 +16,7 @@ Here are commands you can give:
   'new-google-token': Initiate the process for generating a new Google auth 
     token.
   'test-function': Run content of testFunction.
+  'upload-zip': Upload executable zip to S3.
 `;
 
 let testFunction = () => {
@@ -20,6 +24,11 @@ let testFunction = () => {
 }
 
 console.log("Input: " + process.argv[2]);
+
+let s3 = new AwsS3();
+let gCalAPI = GoogleCalendarAPI.createAPI(s3, s3);
+let trelloAPI = new TrelloAPI(s3);
+let calendarTrelloIntegration = CalendarTrelloIntegrationService.createService(gCalAPI, trelloAPI);
 
 switch (process.argv[2]) {
 	case "reset-board":
@@ -32,10 +41,14 @@ switch (process.argv[2]) {
 		calendarTrelloIntegration.checkUpdatedEvents();
 		break;
 	case "new-google-token":
+		let googleAuth = new GoogleAuthAPI(s3);
 		googleAuth.promptForNewToken();
 		break;
 	case "test-function":
 		testFunction();
+		break;
+	case "upload-zip":
+		s3.uploadZip();
 		break;
 	case "-help":
 	case "-h":
