@@ -1,4 +1,5 @@
 import * as Constants from "./../shared/Constants";
+import { WeekdayList } from "./../models/WeekdayList";
 
 import { TrelloAPI } from "./../api/TrelloAPI";
 
@@ -21,11 +22,12 @@ export class TrelloService {
 		
 		this._trelloAPI.getListsAndCardsOnBoard(boardId, params, (allTheLists) => {
 			let listsWeWant = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-			let outputList = {};
+			let outputList: WeekdayList[] = new Array<WeekdayList>();
 			for (let list of allTheLists) {
 				for (let weekday of listsWeWant) {
 					if (list.name.includes(weekday)) {
-						outputList[weekday] = list;
+						let weekdayList = new WeekdayList(list);
+						outputList.push(weekdayList);
 					}
 				}
 			}

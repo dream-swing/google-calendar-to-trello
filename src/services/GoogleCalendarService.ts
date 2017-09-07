@@ -28,9 +28,23 @@ export class GoogleCalendarService {
 					// deleted events don't have a date, so just include it
 					return true;
 				}
+				// for all-day events, it could span multiple weeks,
+				// include it if it overlaps with current week
+				if (event.start.date) {
+					let eventStart = moment(event.start.date);
+					let eventEnd = moment(event.end.date);
 
-				let eventStart = moment(event.start.date || event.start.dateTime);
-				return eventStart.isSameOrAfter(timeMin) && eventStart.isBefore(timeMax);
+					if (eventStart.isSameOrBefore(timeMin)) {
+						return eventEnd.isSameOrAfter(timeMin);
+					} else if (eventStart.isSameOrBefore(timeMax)) {
+						return true;
+					} else {
+						return false;
+					}
+				} else {
+					let eventStart = moment(event.start.dateTime);
+					return eventStart.isSameOrAfter(timeMin) && eventStart.isBefore(timeMax);
+				}
 			});
 
 			callback(thisWeekEvents);
@@ -58,6 +72,17 @@ export class GoogleCalendarService {
 			}
 		};
 		this._gCalAPI.createEvent(this.getTaskCalendarId(), event);
+	}
+
+	public isMultidayEvent(event) {
+		if (event.start.dateTime) {
+			// not an all-day event
+			return false;
+		}
+
+		let start = moment(event.start.date);
+		let end = moment(event.end.date);
+		return end.diff(start, "days") > 0;
 	}
 
 	private getCurrentWeekTimeRange() {
