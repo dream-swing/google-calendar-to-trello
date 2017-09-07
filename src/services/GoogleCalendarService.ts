@@ -16,38 +16,14 @@ export class GoogleCalendarService {
 		this._gCalAPI.listSingleEventsInRange(timeMin.toISOString(), timeMax.toISOString(), callback);
 	}
 
-	public getCurrentWeekUpdatedEvents(callback) {
+	public getUpdatedEvents(callback) {
 		let { timeMin, timeMax } = this.getCurrentWeekTimeRange();
 		this._gCalAPI.getUpdatedEvents((events) => {
 			if (!events) {
 				throw new Error("Error getting events.");
 			}
 
-			let thisWeekEvents = events.filter((event, index, eventsArr) => {
-				if (!event.start) {
-					// deleted events don't have a date, so just include it
-					return true;
-				}
-				// for all-day events, it could span multiple weeks,
-				// include it if it overlaps with current week
-				if (event.start.date) {
-					let eventStart = moment(event.start.date);
-					let eventEnd = moment(event.end.date);
-
-					if (eventStart.isSameOrBefore(timeMin)) {
-						return eventEnd.isSameOrAfter(timeMin);
-					} else if (eventStart.isSameOrBefore(timeMax)) {
-						return true;
-					} else {
-						return false;
-					}
-				} else {
-					let eventStart = moment(event.start.dateTime);
-					return eventStart.isSameOrAfter(timeMin) && eventStart.isBefore(timeMax);
-				}
-			});
-
-			callback(thisWeekEvents);
+			callback(events);
 		});
 	}
 
