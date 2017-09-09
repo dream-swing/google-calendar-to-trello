@@ -17,7 +17,6 @@ export class GoogleCalendarService {
 	}
 
 	public getUpdatedEvents(callback) {
-		let { timeMin, timeMax } = this.getCurrentWeekTimeRange();
 		this._gCalAPI.getUpdatedEvents((events) => {
 			if (!events) {
 				throw new Error("Error getting events.");

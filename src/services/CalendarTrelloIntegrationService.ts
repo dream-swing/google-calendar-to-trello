@@ -36,11 +36,11 @@ export class CalendarTrelloIntegrationService {
 					} else {
 						if (cards) {
 							for (let card of cards) {
-								this.updateCard(card, event);
+								this._trelloService.deleteCard(card);
 							}
-						} else {
-							this.createCards(event, weekdayLists);
 						}
+						
+						this.createCards(event, weekdayLists);
 					}
 				}
 			});
