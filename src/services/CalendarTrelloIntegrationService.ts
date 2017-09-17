@@ -76,7 +76,7 @@ export class CalendarTrelloIntegrationService {
 						this._trelloService.moveCardToTop(card);
 					} else {
 						if (!this.isEventCard(card)) {
-							let startTime: Date = this.getStartTimeForCard(list.trelloList, card, i);
+							let startTime: Date = this.getStartTimeForCard(list, card, i);
 							this._gCalService.addEventToTask(card.name, startTime);
 						}
 						if (!this._trelloService.isRecurringCard(card)) {

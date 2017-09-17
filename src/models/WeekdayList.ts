@@ -21,7 +21,7 @@ class WeekdayList {
 		// subtract one from current year
 		if (parsedMoment.isAfter(moment().add("2", "w"))) {
 			let lastYear = parsedMoment.year() - 1;
-			parsedMoment.year(lastYear);
+			parsedMoment = parsedMoment.year(lastYear);
 		}
 
 		return parsedMoment;
