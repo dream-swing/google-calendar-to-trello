@@ -16,24 +16,13 @@ export class GoogleCalendarService {
 		this._gCalAPI.listSingleEventsInRange(timeMin.toISOString(), timeMax.toISOString(), callback);
 	}
 
-	public getCurrentWeekUpdatedEvents(callback) {
-		let { timeMin, timeMax } = this.getCurrentWeekTimeRange();
+	public getUpdatedEvents(callback) {
 		this._gCalAPI.getUpdatedEvents((events) => {
 			if (!events) {
 				throw new Error("Error getting events.");
 			}
 
-			let thisWeekEvents = events.filter((event, index, eventsArr) => {
-				if (!event.start) {
-					// deleted events don't have a date, so just include it
-					return true;
-				}
-
-				let eventStart = moment(event.start.date || event.start.dateTime);
-				return eventStart.isSameOrAfter(timeMin) && eventStart.isBefore(timeMax);
-			});
-
-			callback(thisWeekEvents);
+			callback(events);
 		});
 	}
 
@@ -58,6 +47,17 @@ export class GoogleCalendarService {
 			}
 		};
 		this._gCalAPI.createEvent(this.getTaskCalendarId(), event);
+	}
+
+	public isMultidayEvent(event) {
+		if (event.start.dateTime) {
+			// not an all-day event
+			return false;
+		}
+
+		let start = moment(event.start.date);
+		let end = moment(event.end.date);
+		return end.diff(start, "days") > 0;
 	}
 
 	private getCurrentWeekTimeRange() {
