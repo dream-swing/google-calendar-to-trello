@@ -23,7 +23,7 @@ export class CalendarTrelloIntegrationService {
 	public checkUpdatedEvents() {
 		this._gCalService.getUpdatedEvents((events) => {
 			console.log("Retrieved updated events from Google Calendar. " + JSON.stringify(events));
-			this._trelloService.getWeekdayLists((weekdayLists) => {
+			this._trelloService.getWeekdayLists((weekdayLists: WeekdayList[]) => {
 				for (let event of events) {
 					let cards = this.findEventsOnBoard(event, weekdayLists);
 
@@ -54,7 +54,7 @@ export class CalendarTrelloIntegrationService {
 			} else if (events.length == 0) {
 				console.log("No upcoming events found.");
 			} else {
-				this._trelloService.getWeekdayLists((weekdayLists) => {
+				this._trelloService.getWeekdayLists((weekdayLists: WeekdayList[]) => {
 					for (let event of events) {
 						let cards = this.findEventsOnBoard(event, weekdayLists);
 						if (!cards) {
@@ -67,7 +67,7 @@ export class CalendarTrelloIntegrationService {
 	}
 
 	public resetBoard() {
-		this._trelloService.getWeekdayLists((weekdayLists) => {
+		this._trelloService.getWeekdayLists((weekdayLists: WeekdayList[]) => {
 			for (let list of weekdayLists) {
 				let cards = list.trelloList.cards;
 				for (let i: number = 0; i < cards.length; i++) {
@@ -91,7 +91,7 @@ export class CalendarTrelloIntegrationService {
 		});
 	}
 
-	private createCards(event, weekdayLists) {
+	private createCards(event, weekdayLists: WeekdayList[]) {
 		if (!this._gCalService.validateEventIsComplete(event)) {
 			throw new Error(`Error: Attempting to add an incomplete event.`);
 		}
@@ -131,7 +131,7 @@ export class CalendarTrelloIntegrationService {
 		this._trelloService.updateCard(card, newName, updatedEvent.id);
 	}
 
-	private findEventsOnBoard(event, weekdayLists): any[] {
+	private findEventsOnBoard(event, weekdayLists: WeekdayList[]): any[] {
 		let cards = new Array();
 		for (let list of weekdayLists) {
 			let card = this.findEventOnSingleList(event, list);
