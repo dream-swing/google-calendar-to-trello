@@ -14,7 +14,7 @@ export class TrelloService {
 	public getWeekdayLists(callback) {
 		let params = {
 			"cards": "open",
-			"card_fields": "name,desc,labels",
+			"card_fields": "name,desc,labels,idLabels",
 			"fields": "name"
 		};
 
@@ -51,9 +51,9 @@ export class TrelloService {
 		}
 	}
 
-	public createCard(list, cardName: string, cardDesc: string) {
+	public createCard(list, cardName: string, cardDesc: string, labelIds: any[]) {
 		console.log(`Adding ${cardName} to list ${list.name}`);
-		this._trelloAPI.createCard(list.id, cardName, cardDesc);
+		this._trelloAPI.createCard(list.id, cardName, cardDesc, labelIds);
 	}
 
 	public deleteCard(card) {

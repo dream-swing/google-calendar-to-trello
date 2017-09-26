@@ -150,43 +150,72 @@ describe("Trello API", function() {
 		let encodedCardName = encodeURIComponent(cardName);
 		let cardDesc = "some description <that seems relevant>! @someone-awesome";
 		let encodedCardDesc = encodeURIComponent(cardDesc);
+		let labelIds = ["234", "123"];
+		let encodedLabelIds = encodeURIComponent("234,123");
 
 		let tests = [
 			{
 				description: "should send all data through query param",
 				cardName: cardName,
 				cardDesc: cardDesc,
-				expectedQuery: `idList=${listId}&name=${encodedCardName}&desc=${encodedCardDesc}`
+				labelIds: labelIds,
+				expectedQuery: `idList=${listId}&name=${encodedCardName}&desc=${encodedCardDesc}&idLabels=${encodedLabelIds}`
 			},
 			{
 				description: "should still create card if cardName is null",
 				cardName: null,
 				cardDesc: cardDesc,
-				expectedQuery: `idList=${listId}&desc=${encodedCardDesc}`
+				labelIds: labelIds,
+				expectedQuery: `idList=${listId}&desc=${encodedCardDesc}&idLabels=${encodedLabelIds}`
 			},
 			{
 				description: "should still create card if cardName is empty string",
 				cardName: "",
 				cardDesc: cardDesc,
-				expectedQuery: `idList=${listId}&desc=${encodedCardDesc}`
+				labelIds: labelIds,
+				expectedQuery: `idList=${listId}&desc=${encodedCardDesc}&idLabels=${encodedLabelIds}`
 			},
 			{
 				description: "should still create card if cardDesc is null",
 				cardName: cardName,
 				cardDesc: null,
-				expectedQuery: `idList=${listId}&name=${encodedCardName}`
+				labelIds: labelIds,
+				expectedQuery: `idList=${listId}&name=${encodedCardName}&idLabels=${encodedLabelIds}`
 			},
 			{
 				description: "should still create card if cardDesc is empty string",
 				cardName: cardName,
 				cardDesc: "",
-				expectedQuery: `idList=${listId}&name=${encodedCardName}`
+				labelIds: labelIds,
+				expectedQuery: `idList=${listId}&name=${encodedCardName}&idLabels=${encodedLabelIds}`
 			},
 			{
 				description: "should still create card if both cardName and cardDesc are null",
 				cardName: null,
 				cardDesc: null,
-				expectedQuery: `idList=${listId}`
+				labelIds: labelIds,
+				expectedQuery: `idList=${listId}&idLabels=${encodedLabelIds}`
+			},
+			{
+				description: "should still create card if labelIds is null",
+				cardName: cardName,
+				cardDesc: cardDesc,
+				labelIds: null,
+				expectedQuery: `idList=${listId}&name=${encodedCardName}&desc=${encodedCardDesc}`
+			},
+			{
+				description: "should not include labelIds if labelIds has length 0",
+				cardName: cardName,
+				cardDesc: cardDesc,
+				labelIds: [],
+				expectedQuery: `idList=${listId}&name=${encodedCardName}&desc=${encodedCardDesc}`
+			},
+			{
+				description: "should include single labelId if labelIds contains one element",
+				cardName: cardName,
+				cardDesc: cardDesc,
+				labelIds: ["123"],
+				expectedQuery: `idList=${listId}&name=${encodedCardName}&desc=${encodedCardDesc}&idLabels=123`
 			}
 		];
 
@@ -194,7 +223,7 @@ describe("Trello API", function() {
 			it(test.description, function() {
 				stubHttpsSimpleResponse(this.stubbedHttpsRequest);
 
-				this.trelloAPI.createCard(listId, test.cardName, test.cardDesc);
+				this.trelloAPI.createCard(listId, test.cardName, test.cardDesc, test.labelIds);
 
 				let expectedOptions = createRequestOption(
 					`${TRELLO_API_VER}/cards?${test.expectedQuery}`,

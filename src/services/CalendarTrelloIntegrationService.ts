@@ -34,13 +34,18 @@ export class CalendarTrelloIntegrationService {
 							}
 						}
 					} else {
+						let labels = [];
 						if (cards) {
+							if (cards.length > 0) {
+								labels = cards[0].idLabels;
+							}
+
 							for (let card of cards) {
 								this._trelloService.deleteCard(card);
 							}
 						}
 						
-						this.createCards(event, weekdayLists);
+						this.createCards(event, weekdayLists, labels);
 					}
 				}
 			});
@@ -58,7 +63,7 @@ export class CalendarTrelloIntegrationService {
 					for (let event of events) {
 						let cards = this.findEventsOnBoard(event, weekdayLists);
 						if (!cards) {
-							this.createCards(event, weekdayLists);
+							this.createCards(event, weekdayLists, []);
 						}
 					}
 				});
@@ -91,7 +96,7 @@ export class CalendarTrelloIntegrationService {
 		});
 	}
 
-	private createCards(event, weekdayLists: WeekdayList[]) {
+	private createCards(event, weekdayLists: WeekdayList[], labels: any[]) {
 		if (!this._gCalService.validateEventIsComplete(event)) {
 			throw new Error(`Error: Attempting to add an incomplete event.`);
 		}
@@ -105,7 +110,7 @@ export class CalendarTrelloIntegrationService {
 				let listDate = moment(list.date).tz(Constants.TIMEZONE);
 				if (listDate.isSameOrAfter(eventStart) && listDate.isBefore(eventEnd)) {
 					let cardTitle = this.getCardNameFromEvent(event);
-					this._trelloService.createCard(list.trelloList, cardTitle, event.id);
+					this._trelloService.createCard(list.trelloList, cardTitle, event.id, labels);
 				}
 			}
 		} else {
@@ -118,17 +123,8 @@ export class CalendarTrelloIntegrationService {
 			}
 
 			let cardTitle = this.getCardNameFromEvent(event);
-			this._trelloService.createCard(list.trelloList, cardTitle, event.id);
+			this._trelloService.createCard(list.trelloList, cardTitle, event.id, labels);
 		}
-	}
-
-	private updateCard(card, updatedEvent) {
-		if (!this._gCalService.validateEventIsComplete(updatedEvent)) {
-			throw new Error(`Error: Attempting to update an card to an incomplete event.`);
-		}
-
-		let newName = this.getCardNameFromEvent(updatedEvent);
-		this._trelloService.updateCard(card, newName, updatedEvent.id);
 	}
 
 	private findEventsOnBoard(event, weekdayLists: WeekdayList[]): any[] {

@@ -37,7 +37,7 @@ export class TrelloAPI {
 		this.putRequest(`${TrelloAPI.TRELLO_API_VER}/lists/${listId}`, data);
 	}
 
-	public createCard(listId: string, cardName: string, cardDesc: string) {
+	public createCard(listId: string, cardName: string, cardDesc: string, labelIds: string[]) {
 		if (!listId) {
 			throw new Error("list id required for creating card.");
 		}
@@ -52,6 +52,10 @@ export class TrelloAPI {
 
 		if (cardDesc) {
 			data["desc"] = encodeURIComponent(cardDesc);
+		}
+
+		if (labelIds !== null && labelIds.length > 0) {
+			data["idLabels"] = encodeURIComponent(labelIds.join());
 		}
 		// apparently parameters have to be submitted through query string
 		// instead of request body
