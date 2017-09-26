@@ -9,8 +9,7 @@ export class GoogleCalendarService {
 
 	constructor(private _gCalAPI: GoogleCalendarAPI) {}
 
-	public getWeeklyEvents(callback) {
-		let { timeMin, timeMax } = this.getCurrentWeekTimeRange();
+	public getWeeklyEvents(timeMin: Date, timeMax: Date, callback) {
 		console.log("timeMin: %s, timeMax: %s", moment(timeMin).format("LLLL"), moment(timeMax).format("LLLL"));
 
 		this._gCalAPI.listSingleEventsInRange(timeMin.toISOString(), timeMax.toISOString(), callback);
@@ -58,36 +57,6 @@ export class GoogleCalendarService {
 		let start = moment(event.start.date);
 		let end = moment(event.end.date);
 		return end.diff(start, "days") > 0;
-	}
-
-	private getCurrentWeekTimeRange() {
-		let today = moment().tz(Constants.TIMEZONE);
-		let dayOfWeek: number = today.day();
-
-		let timeMin: Date = today.toDate();
-		let timeMax: Date = today.toDate();
-
-		if (dayOfWeek == 5) {
-			// today is Friday
-			// we want min to be tomorrow, and max to be next Sat midnight
-			timeMin = moment(today).startOf("day").add(1, "days").toDate();
-			timeMax = moment(today).startOf("day").add(8, "days").toDate();
-		} else {
-			// all days except Friday
-			// we want min to be right now, and max to be this Sat midnight
-			// no need to set timeMin because it's already now
-			if (dayOfWeek == 6) {
-				// today is Saturday
-				// set dayOfWeek to -1 so timeMax is actually a week from now
-				dayOfWeek = -1;
-			}
-			timeMax = moment(today).startOf("day").add(7 - (dayOfWeek + 1), "days").toDate();
-		}
-
-		return {
-			timeMin: timeMin,
-			timeMax: timeMax
-		};
 	}
 
 	private getTaskCalendarId() {

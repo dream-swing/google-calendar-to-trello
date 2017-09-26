@@ -53,21 +53,22 @@ export class CalendarTrelloIntegrationService {
 	}
 
 	public populateTrelloWithWeeklyEvent() {
-		this._gCalService.getWeeklyEvents((events) => {
-			if (!events) {
-				throw new Error("Error retrieving weekly Google events");
-			} else if (events.length == 0) {
-				console.log("No upcoming events found.");
-			} else {
-				this._trelloService.getWeekdayLists((weekdayLists: WeekdayList[]) => {
+		this._trelloService.getWeekdayLists((weekdayLists: WeekdayList[]) => {
+			let { timeMin, timeMax } = this.getWeekdayListSpan(weekdayLists);
+			this._gCalService.getWeeklyEvents(timeMin, timeMax, (events) => {
+				if (!events) {
+					throw new Error("Error retrieving weekly Google events");
+				} else if (events.length == 0) {
+					console.log("No upcoming events found.");
+				} else {
 					for (let event of events) {
 						let cards = this.findEventsOnBoard(event, weekdayLists);
 						if (!cards) {
 							this.createCards(event, weekdayLists, []);
 						}
 					}
-				});
-			}
+				}
+			});
 		});
 	}
 
@@ -178,6 +179,32 @@ export class CalendarTrelloIntegrationService {
 
 		console.log(`${event.summary} does not belong to any list.`);
 		return null;
+	}
+
+	private getWeekdayListSpan(weekdayLists: WeekdayList[]) {
+		if (!weekdayLists || weekdayLists.length <= 0) {
+			return null;
+		}
+
+		let min = moment(weekdayLists[0].date);
+		let max = moment(weekdayLists[0].date);
+
+		for (let weekday of weekdayLists) {
+			let weekdayMoment = moment(weekday.date);
+			if (weekdayMoment.isBefore(min)) {
+				min = weekdayMoment;
+			}
+			if (weekdayMoment.isAfter(max)) {
+				max = weekdayMoment;
+			}
+		}
+
+		max = max.add(1, "d");
+
+		return {
+			timeMin: min.toDate(),
+			timeMax: max.toDate()
+		}
 	}
 
 	private getCardNameFromEvent(event): string {
