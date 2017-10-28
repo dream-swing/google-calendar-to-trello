@@ -5,7 +5,7 @@ import { TrelloAPI } from "./../api/TrelloAPI";
 
 export class TrelloService {
 	private static readonly WEEKLY_PLANNER_BOARDID = "59387c00db4e82fa3c3825b3";
-	private static readonly TEST_BOARDID = "595fcd34efd0be9149f39649";
+	private static readonly TEST_BOARDID = "59f3c1d405c9c78c7972585b";
 	private static readonly DONE_SEPARATOR = "===^===^=DONE=^===^===";
 	private static readonly RECURRING_LABEL = "Recurring";
 
@@ -52,7 +52,7 @@ export class TrelloService {
 	}
 
 	public createCard(list, cardName: string, cardDesc: string, labelIds: any[]) {
-		console.log(`Adding ${cardName} to list ${list.name}`);
+		console.log(`Adding ${cardName} with description: ${cardDesc} to list ${list.name}`);
 		this._trelloAPI.createCard(list.id, cardName, cardDesc, labelIds);
 	}
 

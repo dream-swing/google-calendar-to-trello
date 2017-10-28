@@ -35,9 +35,11 @@ export class CalendarTrelloIntegrationService {
 						}
 					} else {
 						let labels = [];
+						let desc = null;
 						if (cards) {
 							if (cards.length > 0) {
 								labels = cards[0].idLabels;
+								desc = cards[0].desc;
 							}
 
 							for (let card of cards) {
@@ -45,7 +47,7 @@ export class CalendarTrelloIntegrationService {
 							}
 						}
 						
-						this.createCards(event, weekdayLists, labels);
+						this.createCards(event, weekdayLists, desc, labels);
 					}
 				}
 			});
@@ -64,7 +66,7 @@ export class CalendarTrelloIntegrationService {
 					for (let event of events) {
 						let cards = this.findEventsOnBoard(event, weekdayLists);
 						if (!cards) {
-							this.createCards(event, weekdayLists, []);
+							this.createCards(event, weekdayLists, null, []);
 						}
 					}
 				}
@@ -97,23 +99,23 @@ export class CalendarTrelloIntegrationService {
 		});
 	}
 
-	private createCards(event, weekdayLists: WeekdayList[], labels: any[]) {
+	private createCards(event, weekdayLists: WeekdayList[], existingDesc: string, labels: any[]) {
 		if (!this._gCalService.validateEventIsComplete(event)) {
 			throw new Error(`Error: Attempting to add an incomplete event.`);
 		}
 
-		if (this._gCalService.isMultidayEvent(event)) {
-			// all day events from Google don't have timezone information
-			let eventStart = moment.tz(event.start.date, Constants.TIMEZONE);
-			let eventEnd = moment.tz(event.end.date, Constants.TIMEZONE);
+		let listToAdd: (list: WeekdayList) => boolean;
 
-			for (let list of weekdayLists) {
+		if (this._gCalService.isMultidayEvent(event)) {
+
+			listToAdd = (list: WeekdayList) => {
+				// all day events from Google don't have timezone information
+				let eventStart = moment.tz(event.start.date, Constants.TIMEZONE);
+				let eventEnd = moment.tz(event.end.date, Constants.TIMEZONE);
+
 				let listDate = moment(list.date).tz(Constants.TIMEZONE);
-				if (listDate.isSameOrAfter(eventStart) && listDate.isBefore(eventEnd)) {
-					let cardTitle = this.getCardNameFromEvent(event);
-					this._trelloService.createCard(list.trelloList, cardTitle, event.id, labels);
-				}
-			}
+				return listDate.isSameOrAfter(eventStart) && listDate.isBefore(eventEnd);
+			};
 		} else {
 			// one day event
 			let list: WeekdayList = this.getListEventBelongsTo(event, weekdayLists);
@@ -123,8 +125,17 @@ export class CalendarTrelloIntegrationService {
 				return;
 			}
 
-			let cardTitle = this.getCardNameFromEvent(event);
-			this._trelloService.createCard(list.trelloList, cardTitle, event.id, labels);
+			listToAdd = (listToCheck: WeekdayList) => {
+				return listToCheck.trelloList.id == list.trelloList.id;
+			}
+		}
+
+		for (let list of weekdayLists) {
+			if (listToAdd(list)) {
+				let cardTitle = this.getCardNameFromEvent(event);
+				let cardDesc = (existingDesc) ? existingDesc : event.id;
+				this._trelloService.createCard(list.trelloList, cardTitle, cardDesc, labels);
+			}
 		}
 	}
 
@@ -149,7 +160,7 @@ export class CalendarTrelloIntegrationService {
 	private findEventOnSingleList(event, list: WeekdayList) {
 		let eventName = event.summary || event.id;
 		for (let card of list.trelloList.cards) {
-			if (card.desc == event.id) {
+			if (card.desc.includes(event.id)) {
 				console.log(`Event found in list. cardName: ${card.name}, cardDesc: ${card.desc}`);
 				return card;
 			}
