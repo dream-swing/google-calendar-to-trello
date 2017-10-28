@@ -81,11 +81,13 @@ export class CalendarTrelloIntegrationService {
 				for (let i: number = 0; i < cards.length; i++) {
 					let card = cards[i];
 					if (this._trelloService.isDoneSeparatorCard(card)) {
+						// TODO: done separator is being deprecated as we move towards
+						// Planyway day planning. Remove when no longer in use
 						this._trelloService.moveCardToTop(card);
 					} else {
 						if (!this.isEventCard(card)) {
-							let startTime: Date = this.getStartTimeForCard(list, card, i);
-							this._gCalService.addEventToTask(card.name, startTime);
+							let { start, end } = this.getTimeForCard(list, card, i);
+							this._gCalService.addEventToTask(card.name, start, end);
 						}
 						if (!this._trelloService.isRecurringCard(card)) {
 							this._trelloService.deleteCard(card);
@@ -231,12 +233,57 @@ export class CalendarTrelloIntegrationService {
 		return cardTitle;
 	}
 
+	private getTimeForCard(list: WeekdayList, card, index: number) {
+		let timeRange = this.getTrelliusTimeForCard(card);
+
+		if (!timeRange) {
+			timeRange.start = this.getStartTimeForCard(list, card, index);
+			timeRange.end = null;
+		}
+
+		return timeRange;
+	}
+
 	private getStartTimeForCard(list: WeekdayList, card, index: number): Date {
 		let date = moment(list.date);
 		let hour: number = CalendarTrelloIntegrationService.DAY_START_HOUR + index;
 		let startTime = moment.tz([date.year(), date.month(), date.date(), hour], Constants.TIMEZONE).toDate();
-		console.log(`Start time for ${card.name} constructed to be ${startTime}`);
+		console.log(`Start time for ${card.name} artificially constructed to be ${startTime}`);
 		return startTime;
+	}
+
+	private getTrelliusTimeForCard(card) {
+		let TRELLIUS_INDICATOR = "![Trellius Data - DO NOT EDIT!]()[]";
+
+		if (!card.desc.includes(TRELLIUS_INDICATOR)) {
+			return null;
+		}
+
+		let trelliusSplit: string[] = card.desc.split(TRELLIUS_INDICATOR);
+
+		if (!(trelliusSplit.length == 2 && trelliusSplit[1].length >= 3)) {
+			return null;
+		}
+
+		console.log(`trelliusSplit[1]: ${trelliusSplit[1]}`);
+
+		let trelliusDataProcessed = trelliusSplit[1].substring(1, trelliusSplit[1].length - 1);
+		let trelliusData = JSON.parse(trelliusDataProcessed);
+
+		console.log("trellius data: ");
+		console.log(JSON.stringify(trelliusData));
+
+		if (!(trelliusData["start"] && trelliusData["end"])) {
+			return null;
+		}
+
+		let startTime = moment.utc(trelliusData["start"]).toDate();
+		let endTime = moment.utc(trelliusData["end"]).toDate();
+
+		return {
+			"start": startTime,
+			"end": endTime
+		};
 	}
 
 	private getUpdatedListDate(list: WeekdayList) {

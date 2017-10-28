@@ -23,6 +23,10 @@ export class TrelloAPI {
 		this.getRequest(`/boards/${boardId}/lists`, params, callback);
 	}
 
+	public getCard(id: string, callback) {
+		this.getRequest(`/cards/${id}`, {}, callback);
+	}
+
 	public updateList(listId: string, newName: string, pos: string) {
 		if (!(newName || pos)) {
 			throw new Error("Updating list with no new data.");

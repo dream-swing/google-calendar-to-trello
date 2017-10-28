@@ -34,8 +34,10 @@ export class GoogleCalendarService {
 		return eventComplete;
 	}
 
-	public addEventToTask(summary: string, startTime: Date) {
-		let endTime: Date = moment(startTime).add("1", "h").toDate();
+	public addEventToTask(summary: string, startTime: Date, endTime: Date) {
+		if (!endTime) {
+			endTime = moment(startTime).add("1", "h").toDate();
+		}
 		let event = {
 			"summary": summary,
 			"start": {

@@ -19,16 +19,16 @@ Here are commands you can give:
   'upload-zip': Upload executable zip to S3.
 `;
 
-let testFunction = () => {
-	// testing things go here
-}
-
 console.log("Input: " + process.argv[2]);
 
 let s3 = new AwsS3();
 let gCalAPI = GoogleCalendarAPI.createAPI(s3, s3);
 let trelloAPI = new TrelloAPI(s3);
 let calendarTrelloIntegration = CalendarTrelloIntegrationService.createService(gCalAPI, trelloAPI);
+
+let testFunction = () => {
+	// testing things go here
+}
 
 switch (process.argv[2]) {
 	case "reset-board":
