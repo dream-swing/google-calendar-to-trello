@@ -91,6 +91,8 @@ export class CalendarTrelloIntegrationService {
 						}
 						if (!this._trelloService.isRecurringCard(card)) {
 							this._trelloService.deleteCard(card);
+						} else {
+							this._trelloService.clearTrelliusDates(card);
 						}
 					}
 				}
@@ -237,8 +239,10 @@ export class CalendarTrelloIntegrationService {
 		let timeRange = this.getTrelliusTimeForCard(card);
 
 		if (!timeRange) {
-			timeRange.start = this.getStartTimeForCard(list, card, index);
-			timeRange.end = null;
+			timeRange = {
+				start: this.getStartTimeForCard(list, card, index),
+				end: null
+			};
 		}
 
 		return timeRange;

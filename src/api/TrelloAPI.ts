@@ -74,22 +74,13 @@ export class TrelloAPI {
 		this.deleteRequest(`${TrelloAPI.TRELLO_API_VER}/cards/${cardId}`, {});
 	}
 
-	public updateCard(cardId: string, cardName: string, cardDesc: string) {
+	public updateCard(cardId: string, data: any) {
 		if (!cardId) {
 			throw new Error("card id required for updating card.");
 		}
 
-		if (cardName === null && cardDesc === null) {
-			throw new Error("must update card with new information");
-		}
-
-		let data = {};
-
-		if (cardName !== null) {
-			data["name"] = encodeURIComponent(cardName);
-		}
-		if (cardDesc !== null) {
-			data["desc"] = encodeURIComponent(cardDesc);
+		for (let key in data) {
+			data[key] = encodeURIComponent(data[key]);
 		}
 
 		this.putRequest(`${TrelloAPI.TRELLO_API_VER}/cards/${cardId}`, data);

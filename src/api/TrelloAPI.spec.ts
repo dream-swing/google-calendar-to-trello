@@ -281,30 +281,6 @@ describe("Trello API", function() {
 				cardName: cardName,
 				cardDesc: cardDesc,
 				expectedQuery: `name=${encodedCardName}&desc=${encodedCardDesc}`
-			},
-			{
-				description: "should not update description if description is null",
-				cardName: cardName,
-				cardDesc: null,
-				expectedQuery: `name=${encodedCardName}`
-			},
-			{
-				description: "should update description if cardDesc is empty string",
-				cardName: cardName,
-				cardDesc: "",
-				expectedQuery: `name=${encodedCardName}&desc=`
-			},
-			{
-				description: "should not update name if name is null",
-				cardName: null,
-				cardDesc: cardDesc,
-				expectedQuery: `desc=${encodedCardDesc}`
-			},
-			{
-				description: "should update name if cardName is empty string",
-				cardName: "",
-				cardDesc: cardDesc,
-				expectedQuery: `name=&desc=${encodedCardDesc}`
 			}
 		];
 
@@ -312,7 +288,12 @@ describe("Trello API", function() {
 			it(test.description, function() {
 				stubHttpsSimpleResponse(this.stubbedHttpsRequest);
 
-				this.trelloAPI.updateCard(cardId, test.cardName, test.cardDesc);
+				let data = {
+					"name": test.cardName,
+					"desc": test.cardDesc
+				}
+
+				this.trelloAPI.updateCard(cardId, data);
 
 				let expectedOptions = createRequestOption(
 					`${TRELLO_API_VER}/cards/${cardId}?${test.expectedQuery}`,
@@ -324,7 +305,7 @@ describe("Trello API", function() {
 
 		it("should throw if cardId is null", function() {
 			let testFunc = () => {
-				this.trelloAPI.updateCard(null, cardName, cardDesc);
+				this.trelloAPI.updateCard(null, {});
 			};
 
 			expect(testFunc).to.throw("card id required");
@@ -332,7 +313,7 @@ describe("Trello API", function() {
 
 		it("should throw if cardId is empty string", function() {
 			let testFunc = () => {
-				this.trelloAPI.updateCard("", cardName, cardDesc);
+				this.trelloAPI.updateCard("", {});
 			};
 
 			expect(testFunc).to.throw("card id required");

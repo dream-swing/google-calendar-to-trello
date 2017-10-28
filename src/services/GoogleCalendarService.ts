@@ -5,7 +5,7 @@ import { GoogleCalendarAPI } from "./../api/GoogleCalendarAPI";
 
 export class GoogleCalendarService {
 	private static readonly TASK_CALENDAR_ID = "7gbqp1gdlr9vkg2l7j7kkfa71g@group.calendar.google.com";
-	private static readonly TEST_TASK_CALENDAR_ID = "gc1bpqfc1i5rvaeef0l913b8bk@group.calendar.google.com";
+	private static readonly TEST_TASK_CALENDAR_ID = "nbjdhtdiqrj1h32jcn86v8lncg@group.calendar.google.com";
 
 	constructor(private _gCalAPI: GoogleCalendarAPI) {}
 
