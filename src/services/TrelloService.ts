@@ -6,6 +6,7 @@ import { TrelloAPI } from "./../api/TrelloAPI";
 export class TrelloService {
 	private static readonly WEEKLY_PLANNER_BOARDID = "59387c00db4e82fa3c3825b3";
 	private static readonly TEST_BOARDID = "59f3f5608aad71170b6d57d7";
+	private static readonly SEPARATORS = "====";
 	private static readonly RECURRING_LABEL = "Recurring";
 
 	constructor(private _trelloAPI: TrelloAPI) {}
@@ -73,6 +74,11 @@ export class TrelloService {
 	public moveCardToTop(card) {
 		console.log(`Moving card ${card.name} to top of list.`);
 		this._trelloAPI.updateCardPos(card.id, "top");
+	}
+
+	public isSeparatorCard(card): boolean {
+		let name: String = card.name;
+		return name.startsWith(TrelloService.SEPARATORS);
 	}
 
 	public isRecurringCard(card): boolean {

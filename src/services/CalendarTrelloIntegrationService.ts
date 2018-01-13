@@ -80,14 +80,16 @@ export class CalendarTrelloIntegrationService {
 				let cards = list.trelloList.cards;
 				for (let i: number = 0; i < cards.length; i++) {
 					let card = cards[i];
-					if (!this.isEventCard(card)) {
-						let { start, end } = this.getTimeForCard(list, card, i);
-						this._gCalService.addEventToTask(card.name, start, end);
-					}
-					if (!this._trelloService.isRecurringCard(card)) {
-						this._trelloService.deleteCard(card);
-					} else {
-						this._trelloService.clearTrelliusDates(card);
+					if (!this._trelloService.isSeparatorCard(card)) {
+						if (!this.isEventCard(card)) {
+							let { start, end } = this.getTimeForCard(list, card, i);
+							this._gCalService.addEventToTask(card.name, start, end);
+						}
+						if (!this._trelloService.isRecurringCard(card)) {
+							this._trelloService.deleteCard(card);
+						} else {
+							this._trelloService.clearTrelliusDates(card);
+						}
 					}
 				}
 				// update list name with this week's dates
