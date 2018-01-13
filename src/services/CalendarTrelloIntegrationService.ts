@@ -23,7 +23,7 @@ export class CalendarTrelloIntegrationService {
 	public checkUpdatedEvents() {
 		this._gCalService.getUpdatedEvents((events) => {
 			console.log("Retrieved updated events from Google Calendar. " + JSON.stringify(events));
-			this._trelloService.getWeekdayLists((weekdayLists) => {
+			this._trelloService.getWeekdayLists((weekdayLists: WeekdayList[]) => {
 				for (let event of events) {
 					let cards = this.findEventsOnBoard(event, weekdayLists);
 
@@ -34,13 +34,20 @@ export class CalendarTrelloIntegrationService {
 							}
 						}
 					} else {
+						let labels = [];
+						let desc = null;
 						if (cards) {
+							if (cards.length > 0) {
+								labels = cards[0].idLabels;
+								desc = cards[0].desc;
+							}
+
 							for (let card of cards) {
 								this._trelloService.deleteCard(card);
 							}
 						}
 						
-						this.createCards(event, weekdayLists);
+						this.createCards(event, weekdayLists, desc, labels);
 					}
 				}
 			});
@@ -48,40 +55,39 @@ export class CalendarTrelloIntegrationService {
 	}
 
 	public populateTrelloWithWeeklyEvent() {
-		this._gCalService.getWeeklyEvents((events) => {
-			if (!events) {
-				throw new Error("Error retrieving weekly Google events");
-			} else if (events.length == 0) {
-				console.log("No upcoming events found.");
-			} else {
-				this._trelloService.getWeekdayLists((weekdayLists) => {
+		this._trelloService.getWeekdayLists((weekdayLists: WeekdayList[]) => {
+			let { timeMin, timeMax } = this.getWeekdayListSpan(weekdayLists);
+			this._gCalService.getWeeklyEvents(timeMin, timeMax, (events) => {
+				if (!events) {
+					throw new Error("Error retrieving weekly Google events");
+				} else if (events.length == 0) {
+					console.log("No upcoming events found.");
+				} else {
 					for (let event of events) {
 						let cards = this.findEventsOnBoard(event, weekdayLists);
 						if (!cards) {
-							this.createCards(event, weekdayLists);
+							this.createCards(event, weekdayLists, null, []);
 						}
 					}
-				});
-			}
+				}
+			});
 		});
 	}
 
 	public resetBoard() {
-		this._trelloService.getWeekdayLists((weekdayLists) => {
+		this._trelloService.getWeekdayLists((weekdayLists: WeekdayList[]) => {
 			for (let list of weekdayLists) {
 				let cards = list.trelloList.cards;
 				for (let i: number = 0; i < cards.length; i++) {
 					let card = cards[i];
-					if (this._trelloService.isDoneSeparatorCard(card)) {
-						this._trelloService.moveCardToTop(card);
+					if (!this.isEventCard(card)) {
+						let { start, end } = this.getTimeForCard(list, card, i);
+						this._gCalService.addEventToTask(card.name, start, end);
+					}
+					if (!this._trelloService.isRecurringCard(card)) {
+						this._trelloService.deleteCard(card);
 					} else {
-						if (!this.isEventCard(card)) {
-							let startTime: Date = this.getStartTimeForCard(list, card, i);
-							this._gCalService.addEventToTask(card.name, startTime);
-						}
-						if (!this._trelloService.isRecurringCard(card)) {
-							this._trelloService.deleteCard(card);
-						}
+						this._trelloService.clearTrelliusDates(card);
 					}
 				}
 				// update list name with this week's dates
@@ -91,23 +97,23 @@ export class CalendarTrelloIntegrationService {
 		});
 	}
 
-	private createCards(event, weekdayLists) {
+	private createCards(event, weekdayLists: WeekdayList[], existingDesc: string, labels: any[]) {
 		if (!this._gCalService.validateEventIsComplete(event)) {
 			throw new Error(`Error: Attempting to add an incomplete event.`);
 		}
 
-		if (this._gCalService.isMultidayEvent(event)) {
-			// all day events from Google don't have timezone information
-			let eventStart = moment.tz(event.start.date, Constants.TIMEZONE);
-			let eventEnd = moment.tz(event.end.date, Constants.TIMEZONE);
+		let listToAdd: (list: WeekdayList) => boolean;
 
-			for (let list of weekdayLists) {
+		if (this._gCalService.isMultidayEvent(event)) {
+
+			listToAdd = (list: WeekdayList) => {
+				// all day events from Google don't have timezone information
+				let eventStart = moment.tz(event.start.date, Constants.TIMEZONE);
+				let eventEnd = moment.tz(event.end.date, Constants.TIMEZONE);
+
 				let listDate = moment(list.date).tz(Constants.TIMEZONE);
-				if (listDate.isSameOrAfter(eventStart) && listDate.isBefore(eventEnd)) {
-					let cardTitle = this.getCardNameFromEvent(event);
-					this._trelloService.createCard(list.trelloList, cardTitle, event.id);
-				}
-			}
+				return listDate.isSameOrAfter(eventStart) && listDate.isBefore(eventEnd);
+			};
 		} else {
 			// one day event
 			let list: WeekdayList = this.getListEventBelongsTo(event, weekdayLists);
@@ -117,21 +123,21 @@ export class CalendarTrelloIntegrationService {
 				return;
 			}
 
-			let cardTitle = this.getCardNameFromEvent(event);
-			this._trelloService.createCard(list.trelloList, cardTitle, event.id);
+			listToAdd = (listToCheck: WeekdayList) => {
+				return listToCheck.trelloList.id == list.trelloList.id;
+			}
+		}
+
+		for (let list of weekdayLists) {
+			if (listToAdd(list)) {
+				let cardTitle = this.getCardNameFromEvent(event);
+				let cardDesc = (existingDesc) ? existingDesc : event.id;
+				this._trelloService.createCard(list.trelloList, cardTitle, cardDesc, labels);
+			}
 		}
 	}
 
-	private updateCard(card, updatedEvent) {
-		if (!this._gCalService.validateEventIsComplete(updatedEvent)) {
-			throw new Error(`Error: Attempting to update an card to an incomplete event.`);
-		}
-
-		let newName = this.getCardNameFromEvent(updatedEvent);
-		this._trelloService.updateCard(card, newName, updatedEvent.id);
-	}
-
-	private findEventsOnBoard(event, weekdayLists): any[] {
+	private findEventsOnBoard(event, weekdayLists: WeekdayList[]): any[] {
 		let cards = new Array();
 		for (let list of weekdayLists) {
 			let card = this.findEventOnSingleList(event, list);
@@ -152,7 +158,7 @@ export class CalendarTrelloIntegrationService {
 	private findEventOnSingleList(event, list: WeekdayList) {
 		let eventName = event.summary || event.id;
 		for (let card of list.trelloList.cards) {
-			if (card.desc == event.id) {
+			if (card.desc.includes(event.id)) {
 				console.log(`Event found in list. cardName: ${card.name}, cardDesc: ${card.desc}`);
 				return card;
 			}
@@ -184,6 +190,32 @@ export class CalendarTrelloIntegrationService {
 		return null;
 	}
 
+	private getWeekdayListSpan(weekdayLists: WeekdayList[]) {
+		if (!weekdayLists || weekdayLists.length <= 0) {
+			return null;
+		}
+
+		let min = moment(weekdayLists[0].date);
+		let max = moment(weekdayLists[0].date);
+
+		for (let weekday of weekdayLists) {
+			let weekdayMoment = moment(weekday.date);
+			if (weekdayMoment.isBefore(min)) {
+				min = weekdayMoment;
+			}
+			if (weekdayMoment.isAfter(max)) {
+				max = weekdayMoment;
+			}
+		}
+
+		max = max.add(1, "d");
+
+		return {
+			timeMin: min.toDate(),
+			timeMax: max.toDate()
+		}
+	}
+
 	private getCardNameFromEvent(event): string {
 		if (!this._gCalService.validateEventIsComplete(event)) {
 			throw new Error("Cannot create card name from incomplete event info.");
@@ -197,12 +229,59 @@ export class CalendarTrelloIntegrationService {
 		return cardTitle;
 	}
 
+	private getTimeForCard(list: WeekdayList, card, index: number) {
+		let timeRange = this.getTrelliusTimeForCard(card);
+
+		if (!timeRange) {
+			timeRange = {
+				start: this.getStartTimeForCard(list, card, index),
+				end: null
+			};
+		}
+
+		return timeRange;
+	}
+
 	private getStartTimeForCard(list: WeekdayList, card, index: number): Date {
 		let date = moment(list.date);
 		let hour: number = CalendarTrelloIntegrationService.DAY_START_HOUR + index;
 		let startTime = moment.tz([date.year(), date.month(), date.date(), hour], Constants.TIMEZONE).toDate();
-		console.log(`Start time for ${card.name} constructed to be ${startTime}`);
+		console.log(`Start time for ${card.name} artificially constructed to be ${startTime}`);
 		return startTime;
+	}
+
+	private getTrelliusTimeForCard(card) {
+		let TRELLIUS_INDICATOR = "![Trellius Data - DO NOT EDIT!]()[]";
+
+		if (!card.desc.includes(TRELLIUS_INDICATOR)) {
+			return null;
+		}
+
+		let trelliusSplit: string[] = card.desc.split(TRELLIUS_INDICATOR);
+
+		if (!(trelliusSplit.length == 2 && trelliusSplit[1].length >= 3)) {
+			return null;
+		}
+
+		console.log(`trelliusSplit[1]: ${trelliusSplit[1]}`);
+
+		let trelliusDataProcessed = trelliusSplit[1].substring(1, trelliusSplit[1].length - 1);
+		let trelliusData = JSON.parse(trelliusDataProcessed);
+
+		console.log("trellius data: ");
+		console.log(JSON.stringify(trelliusData));
+
+		if (!(trelliusData["start"] && trelliusData["end"])) {
+			return null;
+		}
+
+		let startTime = moment.utc(trelliusData["start"]).toDate();
+		let endTime = moment.utc(trelliusData["end"]).toDate();
+
+		return {
+			"start": startTime,
+			"end": endTime
+		};
 	}
 
 	private getUpdatedListDate(list: WeekdayList) {

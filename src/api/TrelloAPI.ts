@@ -23,6 +23,10 @@ export class TrelloAPI {
 		this.getRequest(`/boards/${boardId}/lists`, params, callback);
 	}
 
+	public getCard(id: string, callback) {
+		this.getRequest(`/cards/${id}`, {}, callback);
+	}
+
 	public updateList(listId: string, newName: string, pos: string) {
 		if (!(newName || pos)) {
 			throw new Error("Updating list with no new data.");
@@ -37,7 +41,7 @@ export class TrelloAPI {
 		this.putRequest(`${TrelloAPI.TRELLO_API_VER}/lists/${listId}`, data);
 	}
 
-	public createCard(listId: string, cardName: string, cardDesc: string) {
+	public createCard(listId: string, cardName: string, cardDesc: string, labelIds: string[]) {
 		if (!listId) {
 			throw new Error("list id required for creating card.");
 		}
@@ -53,6 +57,10 @@ export class TrelloAPI {
 		if (cardDesc) {
 			data["desc"] = encodeURIComponent(cardDesc);
 		}
+
+		if (labelIds !== null && labelIds.length > 0) {
+			data["idLabels"] = encodeURIComponent(labelIds.join());
+		}
 		// apparently parameters have to be submitted through query string
 		// instead of request body
 		this.postRequest(`${TrelloAPI.TRELLO_API_VER}/cards`, data, null, null);
@@ -66,22 +74,13 @@ export class TrelloAPI {
 		this.deleteRequest(`${TrelloAPI.TRELLO_API_VER}/cards/${cardId}`, {});
 	}
 
-	public updateCard(cardId: string, cardName: string, cardDesc: string) {
+	public updateCard(cardId: string, data: any) {
 		if (!cardId) {
 			throw new Error("card id required for updating card.");
 		}
 
-		if (cardName === null && cardDesc === null) {
-			throw new Error("must update card with new information");
-		}
-
-		let data = {};
-
-		if (cardName !== null) {
-			data["name"] = encodeURIComponent(cardName);
-		}
-		if (cardDesc !== null) {
-			data["desc"] = encodeURIComponent(cardDesc);
+		for (let key in data) {
+			data[key] = encodeURIComponent(data[key]);
 		}
 
 		this.putRequest(`${TrelloAPI.TRELLO_API_VER}/cards/${cardId}`, data);
